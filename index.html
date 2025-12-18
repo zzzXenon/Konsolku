@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dynamic App</title>
+  </head>
+  <body ng-app="konsolku" ng-controller="mainController" class="bg-gray-900 text-white h-screen flex overflow-hidden">
+    
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+      <div class="p-6 text-xl font-bold border-b border-gray-700 text-teal-400">
+        Konsolku
+      </div>
+      
+      <nav class="flex-1 p-4 space-y-2">
+        <a ng-repeat="item in menuItems" 
+           ui-sref="{{ item.state }}" 
+           ui-sref-active="bg-gray-700 text-teal-300"
+           class="block px-4 py-3 rounded hover:bg-gray-700 transition cursor-pointer flex items-center gap-3">
+           <span>{{ item.icon }}</span>
+           <span>{{ item.label }}</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="flex-1 p-10 overflow-y-auto">
+      <ui-view></ui-view>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
