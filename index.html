@@ -2,23 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Dynamic App</title>
+    <title>Konsolku v2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
   </head>
   <body ng-app="konsolku" ng-controller="mainController" class="bg-gray-900 text-white h-screen flex overflow-hidden">
     
     <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
       <div class="p-6 text-xl font-bold border-b border-gray-700 text-teal-400">
-        Konsolku
+        Konsolku v2
       </div>
       
-      <nav class="flex-1 p-4 space-y-2">
-        <a ng-repeat="item in menuItems" 
-           ui-sref="{{ item.state }}" 
-           ui-sref-active="bg-gray-700 text-teal-300"
-           class="block px-4 py-3 rounded hover:bg-gray-700 transition cursor-pointer flex items-center gap-3">
-           <span>{{ item.icon }}</span>
-           <span>{{ item.label }}</span>
-        </a>
+      <nav class="flex-1 p-4 space-y-1">
+        
+        <div ng-repeat="item in menuItems">
+          
+          <a ng-if="!item.children"
+            ui-sref="{{item.state}}" 
+            ui-sref-active="bg-gray-700 text-teal-300"
+            class="block px-4 py-3 rounded hover:bg-gray-700 transition cursor-pointer flex items-center gap-3 text-gray-300">
+            <i class="{{item.icon}}"></i>
+            <span>{{item.label}}</span>
+          </a>
+
+          <div ng-if="item.children">
+            <button ng-click="toggleItem(item)" 
+                    class="w-full text-left px-4 py-3 rounded hover:bg-gray-700 transition cursor-pointer flex items-center justify-between text-gray-300">
+              <div class="flex items-center gap-3">
+                <i class="{{item.icon}}"></i>
+                <span>{{item.label}}</span>
+              </div>
+              <span class="transform transition-transform duration-200" ng-class="{'rotate-180': item.isOpen}">
+                ▼
+              </span>
+            </button>
+
+            <div ng-show="item.isOpen" class="pl-4 mt-1 space-y-1 bg-gray-900/50 rounded-b">
+              <a ng-repeat="child in item.children"
+                  ui-sref="{{ child.state }}"
+                  ui-sref-active="text-teal-400 font-semibold"
+                  class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition cursor-pointer flex items-center gap-2">
+                  <i class="{{child.icon}}"></i>
+                  <span>{{child.label}}</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
       </nav>
     </aside>
 
