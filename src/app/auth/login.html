@@ -1,0 +1,74 @@
+<div
+  class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 w-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300"
+>
+  <div
+    class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700 transition-colors duration-300"
+  >
+    <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+      <h1
+        class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center"
+      >
+        Sign in to Konsolku v2
+      </h1>
+      <form class="space-y-4 md:space-y-6" ng-submit="login()">
+        <div>
+          <label
+            for="username"
+            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >Username</label
+          >
+          <input
+            type="text"
+            ng-model="creds.username"
+            id="username"
+            class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-teal-600 focus:border-teal-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="admin"
+            required=""
+          />
+        </div>
+        <div>
+          <label
+            for="password"
+            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >Password</label
+          >
+          <input
+            type="password"
+            ng-model="creds.password"
+            id="password"
+            placeholder="••••••••"
+            class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-teal-600 focus:border-teal-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            required=""
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full text-white bg-teal-600 hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-teal-600 dark:hover:bg-teal-700 dark:focus:ring-teal-800 transition-colors"
+        >
+          Sign in
+        </button>
+
+        <div class="relative flex py-2 items-center">
+          <div
+            class="flex-grow border-t border-gray-300 dark:border-gray-600"
+          ></div>
+          <span class="flex-shrink-0 mx-4 text-gray-400 text-xs"
+            >Dev Option</span
+          >
+          <div
+            class="flex-grow border-t border-gray-300 dark:border-gray-600"
+          ></div>
+        </div>
+
+        <button
+          type="button"
+          ng-click="loginDirect()"
+          class="w-full text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 transition-colors"
+        >
+          🚀 Login Langsung (Bypass)
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
