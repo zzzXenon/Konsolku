@@ -1,24 +1,66 @@
 export default function personController($scope, $filter) {
   console.log("Person Controller Loaded");
 
-  // --- STATE VARIABLES ---
+  // ====== STATE VARIABLES ======
   $scope.title = "Person";
   $scope.isIdentityView = false;
   $scope.fsearch = "";
 
-  // Modal Flags (State)
+  // Modal Flags
   $scope.showPersonModal = false;
   $scope.showIdentityModal = false;
-  $scope.showConfirmModal = false; // Untuk Delete
+  $scope.showConfirmModal = false;
   $scope.verifyEmailModal = false;
 
   // Data Models
   $scope.formData = {};
   $scope.formIdentityData = {};
 
-  // Temp Data untuk Delete
+  // Temp Data
   $scope.tempDeleteId = null;
-  $scope.tempDeleteType = null; // 'person' atau 'identity'
+  $scope.tempDeleteType = null;
+
+  // --- DROPDOWN LOGIC ---
+  $scope.openDropdownId = null;
+
+  $scope.toggleDropdown = function (id) {
+    if ($scope.openDropdownId === id) {
+      $scope.openDropdownId = null;
+    } else {
+      $scope.openDropdownId = id;
+    }
+  };
+
+  $scope.closeAllDropdowns = function () {
+    $scope.openDropdownId = null;
+  };
+
+  // --- AUTOMATIC FULLNAME GENERATOR (FIX) ---
+  // Fungsi ini akan memantau perubahan pada field nama dan mengisi fullName secara otomatis
+  $scope.$watchGroup(
+    [
+      "formData.prefixTitle",
+      "formData.firstName",
+      "formData.middleName",
+      "formData.lastName",
+      "formData.suffixTitle",
+    ],
+    function (newValues) {
+      // Jika formData belum siap, hentikan
+      if (!$scope.formData) return;
+
+      // Ambil nilai terbaru
+      const [prefix, first, middle, last, suffix] = newValues;
+
+      // Gabungkan bagian nama yang tidak kosong
+      const parts = [prefix, first, middle, last, suffix].filter(
+        (part) => part && String(part).trim() !== ""
+      );
+
+      // Update field fullName di layar
+      $scope.formData.fullName = parts.join(" ");
+    }
+  );
 
   // --- DUMMY DATA ---
   $scope.nameTypeOptions = [
@@ -42,32 +84,28 @@ export default function personController($scope, $filter) {
     {
       id: 101,
       nameType: 1,
+      prefixTitle: "Mr.",
       firstName: "Budi",
       middleName: "Santoso",
       lastName: "Wibowo",
-      fullName: "Budi Santoso Wibowo",
+      suffixTitle: "S.Kom",
+      fullName: "Mr. Budi Santoso Wibowo S.Kom",
       remark: "Manager IT",
+      addInfo: "{}",
       status: 1,
     },
     {
       id: 102,
       nameType: 1,
+      prefixTitle: "Ms.",
       firstName: "Siti",
       middleName: "Aminah",
       lastName: "",
-      fullName: "Siti Aminah",
+      suffixTitle: "",
+      fullName: "Ms. Siti Aminah",
       remark: "HR Staff",
+      addInfo: "{}",
       status: 1,
-    },
-    {
-      id: 103,
-      nameType: 2,
-      firstName: "Doe",
-      middleName: "John",
-      lastName: "",
-      fullName: "Doe John",
-      remark: "Consultant",
-      status: 2,
     },
   ];
 
@@ -94,60 +132,68 @@ export default function personController($scope, $filter) {
     },
   ];
 
-  // ============================================
-  // FUNGSI UTAMA: CLOSE MODAL (SOLUSI MASALAH)
-  // ============================================
+  // ====== MODAL FUNCTIONS ======
   $scope.closePersonModal = function () {
     $scope.showPersonModal = false;
   };
-
   $scope.closeIdentityModal = function () {
     $scope.showIdentityModal = false;
   };
-
   $scope.closeConfirmModal = function () {
     $scope.showConfirmModal = false;
     $scope.tempDeleteId = null;
     $scope.tempDeleteType = null;
   };
-
   $scope.closeVerifyModal = function () {
     $scope.verifyEmailModal = false;
   };
 
-  // ============================================
-  // CRUD PERSON
-  // ============================================
+  // ====== CRUD PERSON ======
   $scope.buttonAddNewPerson = function () {
     $scope.formHeader = "Add New Person";
-    $scope.buttonLabel = "Save";
+    $scope.buttonLabel = "Add Person";
     $scope.isEdit = false;
+
+    // Reset form
     $scope.formData = {
       id: null,
       nameType: 1,
+      prefixTitle: "",
       firstName: "",
       middleName: "",
       lastName: "",
+      suffixTitle: "",
       fullName: "",
       remark: "",
+      addInfo: "{}",
       status: 1,
     };
+
     $scope.showPersonModal = true;
+    $scope.closeAllDropdowns();
   };
 
   $scope.buttonEditPerson = function (person) {
     $scope.formHeader = "Edit Person";
-    $scope.buttonLabel = "Update";
+    $scope.buttonLabel = "Update Person";
     $scope.isEdit = true;
     $scope.formData = angular.copy(person);
     $scope.showPersonModal = true;
+    $scope.closeAllDropdowns();
   };
 
   $scope.submitPerson = function () {
-    const { firstName, middleName, lastName } = $scope.formData;
-    $scope.formData.fullName = `${firstName || ""} ${middleName || ""} ${
-      lastName || ""
-    }`.trim();
+    // Logic fullName juga dijalankan di sini sebagai fallback
+    const { prefixTitle, firstName, middleName, lastName, suffixTitle } =
+      $scope.formData;
+    const parts = [
+      prefixTitle,
+      firstName,
+      middleName,
+      lastName,
+      suffixTitle,
+    ].filter((p) => p && p.trim() !== "");
+    $scope.formData.fullName = parts.join(" ");
 
     if ($scope.isEdit) {
       const index = $scope.persons.findIndex(
@@ -162,24 +208,23 @@ export default function personController($scope, $filter) {
       $scope.formData.id = newId;
       $scope.persons.push($scope.formData);
     }
-    $scope.closePersonModal(); // Panggil fungsi close
+    $scope.closePersonModal();
   };
 
-  // Trigger Delete Person Modal
   $scope.buttonDeletePerson = function (id) {
     $scope.tempDeleteId = id;
     $scope.tempDeleteType = "person";
     $scope.deleteMessage = "Are you sure you want to delete this Person data?";
     $scope.showConfirmModal = true;
+    $scope.closeAllDropdowns();
   };
 
-  // ============================================
-  // CRUD IDENTITY
-  // ============================================
+  // ====== CRUD IDENTITY ======
   $scope.buttonPersonIdentity = function (person) {
     $scope.activePerson = person;
     $scope.isIdentityView = true;
     $scope.loadIdentities(person.id);
+    $scope.closeAllDropdowns();
   };
 
   $scope.loadIdentities = function (personId) {
@@ -216,6 +261,7 @@ export default function personController($scope, $filter) {
     $scope.isEditIdentity = true;
     $scope.formIdentityData = angular.copy(identity);
     $scope.showIdentityModal = true;
+    $scope.closeAllDropdowns();
   };
 
   $scope.submitIdentityPerson = function () {
@@ -236,17 +282,14 @@ export default function personController($scope, $filter) {
     $scope.closeIdentityModal();
   };
 
-  // Trigger Delete Identity Modal
   $scope.buttonDeletePersonIdentity = function (id) {
     $scope.tempDeleteId = id;
     $scope.tempDeleteType = "identity";
     $scope.deleteMessage = "Are you sure you want to delete this Identity?";
     $scope.showConfirmModal = true;
+    $scope.closeAllDropdowns();
   };
 
-  // ============================================
-  // EKSEKUSI DELETE (KONFIRMASI)
-  // ============================================
   $scope.confirmDelete = function () {
     if ($scope.tempDeleteType === "person") {
       $scope.persons = $scope.persons.filter(
@@ -264,10 +307,10 @@ export default function personController($scope, $filter) {
     $scope.closeConfirmModal();
   };
 
-  // Verify Email
   $scope.buttonVerifyPersonIdentity = function (identity) {
     $scope.verifyEmailModal = true;
     $scope.tempEmailIdentity = identity.value;
+    $scope.closeAllDropdowns();
   };
 
   // Helpers
