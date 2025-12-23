@@ -1,9 +1,10 @@
-export default function cRoles($scope) {
+export default function roleController($scope) {
   console.log("Role Controller Loaded");
 
   // ===============================
   // STATE UI
   // ===============================
+  $scope.title = "Role";
   $scope.myModal = false;
   $scope.isDetailModal = false;
   $scope.showDeleteConfirm = false;
@@ -19,7 +20,16 @@ export default function cRoles($scope) {
   $scope.openDropdownId = null;
 
   $scope.toggleDropdown = function (rowId) {
-    $scope.openDropdownId = $scope.openDropdownId === rowId ? null : rowId;
+    if ($scope.openDropdownId === rowId) {
+      $scope.openDropdownId = null;
+    } else {
+      $scope.openDropdownId = rowId;
+    }
+  };
+
+  // Fungsi untuk menutup dropdown saat klik di luar (dipanggil di HTML root)
+  $scope.closeAllDropdowns = function () {
+    $scope.openDropdownId = null;
   };
 
   // ===============================
@@ -31,10 +41,14 @@ export default function cRoles($scope) {
     $scope.isDetailModal = false;
   };
 
+  $scope.cancelDelete = function () {
+    $scope.showDeleteConfirm = false;
+    $scope.tempDeleteId = null;
+  };
+
   // ===============================
   // DATA TABLE
-  // Format:
-  // [id, name, activeFlag, roleType, orgId, remark, additionalInfo]
+  // Format: [id, name, activeFlag, roleType, orgId, remark, additionalInfo]
   // ===============================
   $scope.content = [
     [1, "Admin", 1, 0, null, "System Administrator", {}],
@@ -47,30 +61,31 @@ export default function cRoles($scope) {
   // ===============================
   $scope.buttonAddNewRole = function () {
     $scope.tempData = null;
+    $scope.isDetailModal = false;
 
-    $scope.formHeader = "Adding a new role...";
-    $scope.buttonLabel = "Add Role";
+    $scope.formHeader = "Add Role";
+    $scope.buttonLabel = "Save";
 
-    // IMPORTANT: array sesuai HTML
+    // Reset Form
     $scope.newData = [
-      "", // name
-      "0", // activeFlag
-      "0", // roleType
-      "", // organizationId
-      "", // remark
-      "{}", // additionalInfo (JSON)
+      "", // 0: name
+      "1", // 1: activeFlag (Default Active)
+      "1", // 2: roleType (Default App)
+      "", // 3: organizationId
+      "", // 4: remark
+      "{}", // 5: additionalInfo (JSON)
     ];
 
-    $scope.myModal = true; // 🔥 INI KUNCI MODAL MUNCUL
+    $scope.myModal = true;
+    $scope.closeAllDropdowns();
   };
 
   // ===============================
   // DETAIL ROLE (READ-ONLY)
   // ===============================
   $scope.buttonDetailRole = function (row) {
-    $scope.openDropdownId = null;
     $scope.tempData = row;
-    $scope.isDetailModal = true;
+    $scope.isDetailModal = true; // Mode Read-Only
 
     $scope.formHeader = "Role Details";
     $scope.buttonLabel = "";
@@ -85,18 +100,18 @@ export default function cRoles($scope) {
     ];
 
     $scope.myModal = true;
+    $scope.closeAllDropdowns();
   };
 
   // ===============================
   // EDIT ROLE
   // ===============================
   $scope.buttonEditRole = function (row) {
-    $scope.openDropdownId = null;
     $scope.tempData = row;
     $scope.isDetailModal = false;
 
     $scope.formHeader = "Edit Role";
-    $scope.buttonLabel = "Update Role";
+    $scope.buttonLabel = "Update";
 
     $scope.newData = [
       row[1],
@@ -108,6 +123,7 @@ export default function cRoles($scope) {
     ];
 
     $scope.myModal = true;
+    $scope.closeAllDropdowns();
   };
 
   // ===============================
@@ -136,11 +152,11 @@ export default function cRoles($scope) {
       additionalInfo,
     ];
 
-    // ADD
+    // ADD Logic
     if (!$scope.tempData) {
       $scope.content.push([nextId++, ...payload]);
     }
-    // EDIT
+    // EDIT Logic
     else {
       const idx = $scope.content.findIndex((r) => r[0] === $scope.tempData[0]);
       if (idx !== -1) {
@@ -148,16 +164,16 @@ export default function cRoles($scope) {
       }
     }
 
-    $scope.myModal = false;
+    $scope.closeModal();
   };
 
   // ===============================
   // DELETE
   // ===============================
   $scope.deleteRole = function (id) {
-    $scope.openDropdownId = null;
     $scope.tempDeleteId = id;
     $scope.showDeleteConfirm = true;
+    $scope.closeAllDropdowns();
   };
 
   $scope.deleteConfirmed = function () {
@@ -169,11 +185,6 @@ export default function cRoles($scope) {
     $scope.showDeleteConfirm = false;
     $scope.tempDeleteId = null;
   };
-
-  $scope.cancelDelete = function () {
-    $scope.showDeleteConfirm = false;
-    $scope.tempDeleteId = null;
-  };
 }
 
-cRoles.$inject = ["$scope"];
+roleController.$inject = ["$scope"];
