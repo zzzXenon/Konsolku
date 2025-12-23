@@ -1,3 +1,338 @@
-<h1>
-   This is Flag
-</h1>
+<div class="p-8">
+  <div class="mb-6 flex justify-between items-center">
+    <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">
+      ✨ {{pageTitle}}
+    </h2>
+  </div>
+
+  <div ng-show="showTableFlagHeader" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="p-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-gray-200 dark:border-gray-700">
+      
+      <div class="flex gap-2">
+        <button ng-if="checkedIds.length" ng-click="deleteSelected('header')" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition flex items-center gap-2">
+          <i class="fa fa-trash"></i> Delete ({{checkedIds.length}})
+        </button>
+        <button ng-click="btnAddFlagHeader()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition flex items-center gap-2">
+          <i class="fa fa-plus"></i> Add New
+        </button>
+      </div>
+
+      <div class="relative w-full md:w-64">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+          <i class="fa fa-search"></i>
+        </span>
+        <input type="text" ng-model="fsearch" placeholder="Search items..." 
+          class="w-full pl-10 pr-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 outline-none">
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-900 dark:text-gray-300">
+          <tr>
+            <th class="p-4 w-4">
+              <input type="checkbox" ng-model="selectAll" ng-change="toggleSelectAll()" class="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500">
+            </th>
+            <th ng-repeat="(index, value) in flagHeaderHeader track by $index" class="px-6 py-3 cursor-pointer hover:text-teal-600" ng-click="sortData(index)">
+              {{value}}
+              <i class="fa fa-sort ml-1"></i>
+            </th>
+            <th class="px-6 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+          <tr ng-repeat="row in flagHeaderContent | orderBy:getSortValue:reverseSort | filter:fsearch" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <td class="p-4 w-4">
+              <input type="checkbox" ng-model="checkboxes[row[0]]" ng-change="oncheck(row[0], checkboxes[row[0]])" class="w-4 h-4 text-teal-600 rounded border-gray-300">
+            </td>
+            
+            <td class="px-6 py-4">
+              <button ng-click="liveUpdateFlagMultiLang(row)" 
+                class="px-2 py-1 rounded text-xs font-bold"
+                ng-class="row[1] == 1 ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'">
+                {{ row[1] == 1 ? 'Multi' : 'Single' }}
+              </button>
+            </td>
+
+            <td class="px-6 py-4">
+               <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer" ng-model="row[2]" ng-true-value="1" ng-false-value="0" ng-click="liveUpdateFlagInHeader(row)">
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                </label>
+            </td>
+
+            <td class="px-6 py-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                   <input type="checkbox" class="sr-only peer" ng-model="row[3]" ng-true-value="1" ng-false-value="0" ng-click="liveUpdateFlagIsUser(row)">
+                   <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                 </label>
+             </td>
+
+            <td class="px-6 py-4">{{row[4]}}</td>
+
+            <td class="px-6 py-4">{{row[5]}}</td>
+            
+            <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{row[6]}}</td>
+
+            <td class="px-6 py-4 text-right">
+              <div class="relative inline-block text-left">
+                <button ng-click="toggleMenu(row[0], $event)" class="text-gray-500 hover:text-teal-600 focus:outline-none transition">
+                  <i class="fa-solid fa-ellipsis text-xl"></i>
+                </button>
+
+                <div ng-show="activeMenuId === row[0]" 
+                     class="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50 focus:outline-none"
+                     ng-click="$event.stopPropagation()">
+                  <div class="py-1" role="menu">
+                    <a href="" ng-click="btnShowFlagDetail(row); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                      <i class="fa-solid fa-eye w-5 text-blue-500"></i> Details
+                    </a>
+                    <a href="" ng-click="btnEditFlagHeader(row); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                      <i class="fa-solid fa-pencil w-5 text-amber-500"></i> Edit
+                    </a>
+                    <a href="" ng-click="deleteFlagHeader(row[0]); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                      <i class="fa-solid fa-trash w-5 text-red-500"></i> Delete
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          
+          <tr ng-if="!flagHeaderContent.length">
+            <td colspan="8" class="text-center p-8 text-gray-500">No data available.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <div ng-show="showTableFlagDetail" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="p-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex gap-2">
+        <button ng-click="gotoPreviousPage()" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition">
+          <i class="fa fa-arrow-left"></i> Back
+        </button>
+        <button ng-if="checkedIds.length" ng-click="deleteSelected('detail')" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition">
+          <i class="fa fa-trash"></i> Delete
+        </button>
+        <button ng-click="btnAddNewFlagDetail()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition">
+          <i class="fa fa-plus"></i> Add Detail
+        </button>
+      </div>
+      
+      <div class="relative w-full md:w-64">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500"><i class="fa fa-search"></i></span>
+        <input type="text" ng-model="fsearch" placeholder="Search details..." class="w-full pl-10 pr-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-900 dark:text-gray-300">
+          <tr>
+            <th class="p-4 w-4"><input type="checkbox" ng-model="selectAll" ng-change="toggleSelectAll()" class="w-4 h-4 text-teal-600 rounded"></th>
+            <th ng-repeat="(index, value) in flagDetailHeader" class="px-6 py-3 cursor-pointer" ng-click="sortData(index)">{{value}}</th>
+            <th class="px-6 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="row in flagDetailContent | orderBy:getSortValue:reverseSort | filter:fsearch" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <td class="p-4"><input type="checkbox" ng-model="checkboxes[row[0]]" ng-change="oncheck(row[0], checkboxes[row[0]])" class="w-4 h-4 text-teal-600 rounded"></td>
+            
+            <td class="px-6 py-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer" ng-model="row[1]" ng-true-value="1" ng-false-value="0" ng-click="liveUpdateFlagInDetail(row)">
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                </label>
+            </td>
+            
+            <td class="px-6 py-4">{{row[2]}}</td>
+            <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{row[3]}}</td>
+
+            <td class="px-6 py-4 text-right">
+              <div class="relative inline-block text-left">
+                <button ng-click="toggleMenu(row[0], $event)" class="text-gray-500 hover:text-teal-600 focus:outline-none transition">
+                  <i class="fa-solid fa-ellipsis text-xl"></i>
+                </button>
+
+                <div ng-show="activeMenuId === row[0]" 
+                     class="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50"
+                     ng-click="$event.stopPropagation()">
+                  <div class="py-1">
+                    <a href="" ng-click="btnShowFlagDetailLang(row); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                      <i class="fa-solid fa-language w-5 text-blue-500"></i> Details
+                    </a>
+                    <a href="" ng-click="btnEditFlagDetail(row); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                      <i class="fa-solid fa-pencil w-5 text-amber-500"></i> Edit
+                    </a>
+                    <a href="" ng-click="deleteFlagDetail(row[0]); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                      <i class="fa-solid fa-trash w-5 text-red-500"></i> Delete
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div ng-show="showTableFlagDetailLang" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="p-4 flex gap-4 border-b border-gray-200 dark:border-gray-700">
+        <button ng-click="gotoPreviousPage()" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition"><i class="fa fa-arrow-left"></i> Back</button>
+        <button ng-click="btnAddNewFlagDetailLang()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition"><i class="fa fa-plus"></i> Add Language</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-900">
+           <tr>
+             <th class="p-4 w-4"><input type="checkbox" ng-model="selectAll" ng-change="toggleSelectAll()" class="w-4 h-4 text-teal-600"></th>
+             <th ng-repeat="header in flagDetailLangHeader" class="px-6 py-3">{{header}}</th>
+             <th class="px-6 py-3 text-right">Actions</th>
+           </tr>
+        </thead>
+        <tbody>
+           <tr ng-repeat="row in flagDetailLangContent" class="hover:bg-gray-5 dark:hover:bg-gray-700">
+              <td class="p-4"><input type="checkbox" ng-model="checkboxes[row[0]]" ng-change="oncheck(row[0], checkboxes[row[0]])" class="w-4 h-4 text-teal-600"></td>
+              <td class="px-6 py-4 font-bold">{{row[2]}}</td>
+              <td class="px-6 py-4">{{row[3]}}</td>
+              <td class="px-6 py-4 text-right">
+                <div class="relative inline-block text-left">
+                    <button ng-click="toggleMenu(row[0], $event)" class="text-gray-500 hover:text-teal-600 focus:outline-none transition">
+                    <i class="fa-solid fa-ellipsis text-xl"></i>
+                    </button>
+                    <div ng-show="activeMenuId === row[0]" 
+                        class="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50"
+                        ng-click="$event.stopPropagation()">
+                    <div class="py-1">
+                        <a href="" ng-click="btnEditFlagDetailLang(row); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        <i class="fa-solid fa-pencil w-5 text-amber-500"></i> Edit
+                        </a>
+                        <a href="" ng-click="deleteFlagDetailLang(row[0]); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        <i class="fa-solid fa-trash w-5 text-red-500"></i> Delete
+                        </a>
+                    </div>
+                    </div>
+                </div>
+            </td>
+           </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div ng-show="showModalFormFlagHeader" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl p-6 overflow-y-auto max-h-[90vh]">
+        <div class="flex justify-between items-center mb-6">
+           <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{formFlagHeaderTitle}}</h3>
+           <button ng-click="showModalFormFlagHeader = false" class="text-gray-500 hover:text-gray-700">
+             <i class="fa fa-times text-xl"></i>
+           </button>
+        </div>
+        
+        <form ng-submit="submitFormFlagHeader()" class="space-y-4">
+           <div class="flex items-center gap-2">
+              <input type="checkbox" id="multi" ng-model="newDataFlagHeader[0]" ng-true-value="1" ng-false-value="0" class="w-4 h-4 text-teal-600 rounded">
+              <label for="multi" class="text-gray-700 dark:text-gray-300">Multi Language</label>
+           </div>
+
+           <div class="flex items-center gap-2">
+             <input type="checkbox" id="flag" ng-model="newDataFlagHeader[1]" ng-true-value="1" ng-false-value="0" class="w-4 h-4 text-teal-600 rounded">
+             <label for="flag" class="text-gray-700 dark:text-gray-300">Active Flag</label>
+           </div>
+           
+           <div class="flex items-center gap-2">
+             <input type="checkbox" id="isUser" ng-model="newDataFlagHeader[2]" ng-true-value="1" ng-false-value="0" class="w-4 h-4 text-teal-600 rounded">
+             <label for="isUser" class="text-gray-700 dark:text-gray-300">Is User</label>
+           </div>
+
+           <div class="grid grid-cols-2 gap-4">
+              <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Use Count *</label>
+                 <input type="number" ng-model="newDataFlagHeader[3]" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white" required>
+              </div>
+              <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Default Language</label>
+                 <select ng-model="newDataFlagHeader[4]" ng-options="lang for lang in defaultLangOptions" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white"></select>
+              </div>
+           </div>
+
+           <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description *</label>
+              <textarea ng-model="newDataFlagHeader[5]" rows="3" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white" required></textarea>
+           </div>
+           
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">JSON Data</label>
+             <textarea ng-model="newDataFlagHeader[6]" rows="2" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white font-mono text-xs"></textarea>
+           </div>
+
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remark</label>
+             <textarea ng-model="newDataFlagHeader[7]" rows="2" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white"></textarea>
+           </div>
+
+           <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button type="button" ng-click="showModalFormFlagHeader = false" class="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+              <button type="submit" class="px-4 py-2 text-white bg-teal-600 rounded hover:bg-teal-700 font-bold">{{btnFormFlagHeaderLabel}}</button>
+           </div>
+        </form>
+     </div>
+  </div>
+
+  <div ng-show="showModalFormFlagDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">{{formFlagDetailTitle}}</h3>
+        <form ng-submit="submitFormFlagDetail()" class="space-y-4">
+           <div class="flex items-center gap-2">
+             <input type="checkbox" id="flagDet" ng-model="newDataFlagDetail[1]" ng-true-value="1" ng-false-value="0" class="w-4 h-4 text-teal-600 rounded">
+             <label for="flagDet" class="text-gray-700 dark:text-gray-300">Active Flag</label>
+           </div>
+           
+           <div>
+              <label class="block text-sm mb-1 text-gray-700 dark:text-gray-300">Sequence</label>
+              <input type="number" ng-model="newDataFlagDetail[2]" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white">
+           </div>
+           <div>
+              <label class="block text-sm mb-1 text-gray-700 dark:text-gray-300">Description *</label>
+              <textarea ng-model="newDataFlagDetail[3]" rows="3" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white" required></textarea>
+           </div>
+           <div>
+             <label class="block text-sm mb-1 text-gray-700 dark:text-gray-300">Remark</label>
+             <textarea ng-model="newDataFlagDetail[4]" rows="2" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white"></textarea>
+           </div>
+           <div class="flex justify-end gap-3 pt-4">
+              <button type="button" ng-click="showModalFormFlagDetail = false" class="px-4 py-2 bg-gray-200 rounded text-gray-800">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded font-bold">{{btnFormFlagDetailLabel}}</button>
+           </div>
+        </form>
+     </div>
+  </div>
+
+  <div ng-show="showModalFormFlagDetailLang" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">{{formFlagDetailLangTitle}}</h3>
+        <form ng-submit="submitFormFlagDetailLang()" class="space-y-4">
+           <div>
+              <label class="block text-sm mb-1 text-gray-700 dark:text-gray-300">Language Code</label>
+              <select ng-model="newDataFlagDetailLang[1]" ng-options="lang for lang in defaultLangOptions" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white"></select>
+           </div>
+           <div>
+              <label class="block text-sm mb-1 text-gray-700 dark:text-gray-300">Translation *</label>
+              <textarea ng-model="newDataFlagDetailLang[2]" rows="3" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white" required></textarea>
+           </div>
+           <div>
+             <label class="block text-sm mb-1 text-gray-700 dark:text-gray-300">Remark</label>
+             <textarea ng-model="newDataFlagDetailLang[3]" rows="2" class="w-full p-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white"></textarea>
+           </div>
+           <div class="flex justify-end gap-3 pt-4">
+              <button type="button" ng-click="showModalFormFlagDetailLang = false" class="px-4 py-2 bg-gray-200 rounded text-gray-800">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-teal-600 text-white rounded font-bold">{{btnFormFlagDetailLangLabel}}</button>
+           </div>
+        </form>
+     </div>
+  </div>
+</div>

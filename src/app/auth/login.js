@@ -6,7 +6,6 @@ export default function loginController($scope, $state) {
     password: "",
   };
 
-  // Fungsi Login Normal (Simulasi)
   $scope.login = function () {
     if ($scope.creds.username && $scope.creds.password) {
       // Set token pura-pura
@@ -16,20 +15,16 @@ export default function loginController($scope, $state) {
       );
       localStorage.setItem("user", $scope.creds.username);
 
-      // Pindah ke home
       $state.go("home");
     } else {
       alert("Please fill username and password");
     }
   };
 
-  // Fungsi Login Langsung (Bypass)
   $scope.loginDirect = function () {
-    // Set token khusus bypass
     localStorage.setItem("token", "XA-BYPASS-TOKEN");
     localStorage.setItem("user", "SuperAdmin");
 
-    // Pindah ke home
     $state.go("home");
   };
 }

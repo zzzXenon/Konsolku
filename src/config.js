@@ -1,4 +1,3 @@
-// --- IMPORT TEMPLATE & CONTROLLER YANG SUDAH ADA ---
 import homeTemplate from "./app/home/home.html?raw";
 import cHome from "./app/home/home.js";
 import userTemplate from "./app/user/user.html?raw";
@@ -13,23 +12,21 @@ import enumTemplate from "./app/enum/enum.html?raw";
 import cEnum from "./app/enum/enum.js";
 import flagTemplate from "./app/flag/flag.html?raw";
 import cFlag from "./app/flag/flag.js";
+import orgChartTemplate from "./app/organizationchart/organizationchart.html?raw";
+import cOrgChart from "./app/organizationchart/organizationchart.js";
 
-// --- IMPORT LOGIN (BARU) ---
 import loginTemplate from "./app/auth/login.html?raw";
 import cLogin from "./app/auth/login.js";
 
 export const appConfig = [
-  // 1. ROUTE LOGIN (Sidebar disembunyikan via properti hideSidebar)
   {
     label: "Login",
     state: "login",
     url: "/login",
     template: loginTemplate,
     controller: cLogin,
-    hideSidebar: true, // <--- PENTING: Agar sidebar tidak muncul di halaman ini
+    hideSidebar: true,
   },
-
-  // 2. ROUTE HOME
   {
     label: "Home",
     state: "home",
@@ -38,11 +35,17 @@ export const appConfig = [
     controller: cHome,
     icon: "fa-solid fa-house",
   },
-
-  // 3. ENUM & FLAG
+  {
+    label: "Organization Chart",
+    state: "organizationchart",
+    url: "/organizationchart",
+    template: orgChartTemplate,
+    controller: cOrgChart,
+    icon: "fa-solid fa-sitemap",
+  },
   {
     label: "Enum & Flag",
-    icon: "fa-solid fa-tags", // Saya tambahkan icon parent agar konsisten
+    icon: "fa-solid fa-tags",
     children: [
       {
         label: "Enum",
@@ -62,11 +65,9 @@ export const appConfig = [
       },
     ],
   },
-
-  // 4. USER MANAGEMENT
   {
     label: "User Management",
-    icon: "fa-solid fa-users", // Mengganti emoji 👥 agar konsisten dengan style FontAwesome
+    icon: "fa-solid fa-users",
     children: [
       {
         label: "User",
