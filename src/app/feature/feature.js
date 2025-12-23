@@ -2,12 +2,9 @@ export default function featureController($scope, $timeout, $filter) {
   console.log("Feature Controller Loaded");
 
   // ====== STATE VARIABLES ======
-  $scope.title = "Feature";
+  $scope.title = "Feature Management";
   $scope.isMemproses = false;
-
-  // UI State
   $scope.fsearch = "";
-  $scope.filterLevel = "";
 
   // Modals
   $scope.showModalFormFeature = false;
@@ -21,6 +18,19 @@ export default function featureController($scope, $timeout, $filter) {
   $scope.newFeatureRoute = "{}";
   $scope.newFeatureAddInfo = "{}";
 
+  // Selection Models
+  $scope.checkboxes = {};
+  $scope.checkedIds = [];
+  $scope.selectAll = false;
+
+  // -- Temp Data for Delete --
+  $scope.tempDeleteId = null;
+  $scope.tempDeleteType = null; // 'single', 'multiple'
+  $scope.deleteMessage = "";
+
+  // Drag & Drop Variables
+  let _dragId = null;
+
   // Options
   $scope.parentOptions = [];
   $scope.typeOptions = [
@@ -28,6 +38,15 @@ export default function featureController($scope, $timeout, $filter) {
     { val: 2, label: "Page" },
     { val: 3, label: "Action" },
   ];
+
+  // --- DROPDOWN LOGIC ---
+  $scope.openDropdownId = null;
+  $scope.toggleDropdown = function (id) {
+    $scope.openDropdownId = $scope.openDropdownId === id ? null : id;
+  };
+  $scope.closeAllDropdowns = function () {
+    $scope.openDropdownId = null;
+  };
 
   // ====== DUMMY DATA ======
   $scope.rawData = [
@@ -43,7 +62,7 @@ export default function featureController($scope, $timeout, $filter) {
       parent: "0",
       rights: 0,
       seq: 10,
-      remark: "Main",
+      remark: "Halaman Utama",
     },
     {
       id: "2",
@@ -57,7 +76,7 @@ export default function featureController($scope, $timeout, $filter) {
       parent: "0",
       rights: 0,
       seq: 20,
-      remark: "Parent",
+      remark: "Parent Menu",
     },
     {
       id: "21",
@@ -74,20 +93,6 @@ export default function featureController($scope, $timeout, $filter) {
       remark: "",
     },
     {
-      id: "22",
-      name: "Flag List",
-      code: "FLAG_LIST",
-      route: "{}",
-      icon: "fa-solid fa-flag",
-      url: "/flag",
-      level: 1,
-      type: 2,
-      parent: "2",
-      rights: 0,
-      seq: 20,
-      remark: "",
-    },
-    {
       id: "3",
       name: "User Management",
       code: "USER_MGT",
@@ -99,7 +104,7 @@ export default function featureController($scope, $timeout, $filter) {
       parent: "0",
       rights: 0,
       seq: 30,
-      remark: "Parent",
+      remark: "Parent Menu",
     },
     {
       id: "31",
@@ -127,7 +132,7 @@ export default function featureController($scope, $timeout, $filter) {
       parent: "31",
       rights: 0,
       seq: 10,
-      remark: "Btn",
+      remark: "Button Action",
     },
     {
       id: "34",
@@ -143,26 +148,11 @@ export default function featureController($scope, $timeout, $filter) {
       seq: 40,
       remark: "",
     },
-    {
-      id: "4",
-      name: "Settings",
-      code: "SETTING",
-      route: "{}",
-      icon: "fa-solid fa-cogs",
-      url: "/settings",
-      level: 0,
-      type: 1,
-      parent: "0",
-      rights: 0,
-      seq: 99,
-      remark: "Config",
-    },
   ];
 
   $scope.featureContent = [];
   const expanded = {};
   let _editingId = null;
-  let _dragId = null; // Variable global untuk menyimpan ID item yg di-drag
 
   // ====== CORE FUNCTIONS ======
   $scope.closeModal = function () {
@@ -172,15 +162,6 @@ export default function featureController($scope, $timeout, $filter) {
     $scope.confirmModal = false;
   };
 
-  $scope.openDropdownId = null;
-  $scope.toggleDropdown = function (id) {
-    $scope.openDropdownId = $scope.openDropdownId === id ? null : id;
-  };
-  $scope.closeAllDropdowns = function () {
-    $scope.openDropdownId = null;
-  };
-
-  // ====== TREE LOGIC ======
   function ensureExpandedDefaults() {
     if (Object.keys(expanded).length === 0) {
       $scope.rawData.forEach((r) => {
@@ -194,6 +175,7 @@ export default function featureController($scope, $timeout, $filter) {
     return t ? t.label : "-";
   }
 
+  // Recursive search for parent visibility
   function getAncestors(nodeId, allData, resultSet) {
     const node = allData.find((r) => r.id === nodeId);
     if (node && node.parent && node.parent !== "0") {
@@ -245,8 +227,11 @@ export default function featureController($scope, $timeout, $filter) {
           dr._hasChildren = kids.length > 0;
           dr._expanded = q ? true : !!expanded[id];
           dr._typeLabel = getTypeLabel(r.type);
+
           out.push(dr);
-          if (dr._expanded && kids.length) walk(kids, level + 1);
+          if (dr._expanded && kids.length) {
+            walk(kids, level + 1);
+          }
         }
       });
     })(mapChildren["0"] || [], 0);
@@ -257,70 +242,77 @@ export default function featureController($scope, $timeout, $filter) {
   function refreshTable() {
     ensureExpandedDefaults();
     $scope.featureContent = flattenTreeFiltered();
+    recalcSelection();
     $scope.$applyAsync();
 
-    // PENTING: Re-bind Drag & Drop setelah tabel dirender ulang
+    // Re-bind Drag & Drop
     $timeout(function () {
       bindDnDPerRow();
     }, 200);
   }
 
+  // ====== CHECKBOX LOGIC ======
+  function recalcSelection() {
+    const visibleItems = $scope.featureContent || [];
+    $scope.checkedIds = visibleItems
+      .filter((r) => $scope.checkboxes[r.id])
+      .map((r) => r.id);
+    $scope.selectAll =
+      visibleItems.length > 0 &&
+      $scope.checkedIds.length === visibleItems.length;
+  }
+
+  $scope.toggleSelectAll = function () {
+    const visibleItems = $scope.featureContent || [];
+    visibleItems.forEach((r) => {
+      $scope.checkboxes[r.id] = $scope.selectAll;
+    });
+    recalcSelection();
+  };
+
+  $scope.oncheck = function () {
+    recalcSelection();
+  };
+
   $scope.$watch("fsearch", function (newVal, oldVal) {
     if (newVal !== oldVal) refreshTable();
   });
 
-  // ====== DRAG & DROP LOGIC (FIXED) ======
-
+  // ====== DRAG & DROP LOGIC ======
   function bindDnDPerRow() {
-    // Cari container utama
     const container = document.querySelector("[data-feature-root]");
     if (!container) return;
 
-    // Cari semua baris yang memiliki atribut data-id
     const rows = container.querySelectorAll("tr[data-id]");
-
     rows.forEach((row) => {
-      // Pastikan draggable aktif
       row.setAttribute("draggable", "true");
 
-      // --- DRAG START ---
       row.ondragstart = function (e) {
         _dragId = this.getAttribute("data-id");
         e.dataTransfer.effectAllowed = "move";
-        // Style saat di-drag (opsional)
-        this.style.opacity = "0.4";
+        this.classList.add("opacity-50");
       };
 
-      // --- DRAG END ---
       row.ondragend = function (e) {
-        this.style.opacity = "1";
+        this.classList.remove("opacity-50");
         _dragId = null;
-        // Bersihkan garis border
         rows.forEach((r) => (r.style.borderTop = ""));
       };
 
-      // --- DRAG OVER ---
       row.ondragover = function (e) {
-        e.preventDefault(); // Wajib agar bisa drop
+        e.preventDefault();
         e.dataTransfer.dropEffect = "move";
-
-        // Visual feedback: Garis biru di atas row target
-        this.style.borderTop = "2px solid #3b82f6"; // Blue-500
+        this.style.borderTop = "2px solid #0d9488"; // Teal-600 color
       };
 
-      // --- DRAG LEAVE ---
       row.ondragleave = function (e) {
         this.style.borderTop = "";
       };
 
-      // --- DROP ---
       row.ondrop = function (e) {
         e.preventDefault();
         this.style.borderTop = "";
-
         const targetId = this.getAttribute("data-id");
-
-        // Jika drag ID ada, dan bukan drop ke diri sendiri
         if (_dragId && targetId && _dragId !== targetId) {
           $scope.$apply(() => {
             handleReorder(_dragId, targetId);
@@ -336,62 +328,46 @@ export default function featureController($scope, $timeout, $filter) {
 
     if (!draggedItem || !targetItem) return;
 
-    // Validasi: Hanya boleh pindah jika Parent SAMA
+    // Validasi: Hanya boleh pindah di parent yang sama
     if (draggedItem.parent !== targetItem.parent) {
-      alert("⚠️ Hanya bisa memindahkan urutan dalam level/parent yang sama!");
-      refreshTable(); // Reset visual
+      alert(
+        "⚠️ Hanya diperbolehkan mengubah urutan dalam level/parent yang sama!"
+      );
       return;
     }
 
-    // Ambil semua saudara dalam parent yang sama
     const siblings = $scope.rawData
       .filter((r) => r.parent === draggedItem.parent)
       .sort((a, b) => (a.seq || 0) - (b.seq || 0));
 
     const dragIndex = siblings.findIndex((r) => r.id === dragId);
     const targetIndex = siblings.findIndex((r) => r.id === targetId);
-
     let newSeq = 0;
 
     if (dragIndex < targetIndex) {
-      // Pindah ke BAWAH target
+      // Drag ke bawah
       const nextSibling = siblings[targetIndex + 1];
-      if (nextSibling) {
-        // Ambil nilai tengah antara target dan adiknya
-        newSeq = (targetItem.seq + nextSibling.seq) / 2;
-      } else {
-        // Jika paling bawah, tambah 10
-        newSeq = targetItem.seq + 10;
-      }
+      newSeq = nextSibling
+        ? (targetItem.seq + nextSibling.seq) / 2
+        : targetItem.seq + 10;
     } else {
-      // Pindah ke ATAS target
-      // Ambil nilai tengah antara target dan kakaknya (atau target - 5)
-      newSeq = targetItem.seq - 0.1; // Simple logic: geser sedikit ke atas target
-
-      // Logic lebih presisi:
+      // Drag ke atas
       const prevSibling = siblings[targetIndex - 1];
-      if (prevSibling) {
-        newSeq = (prevSibling.seq + targetItem.seq) / 2;
-      } else {
-        newSeq = targetItem.seq / 2;
-      }
+      newSeq = prevSibling
+        ? (prevSibling.seq + targetItem.seq) / 2
+        : targetItem.seq / 2;
     }
 
-    // Update data
     draggedItem.seq = newSeq;
-
-    console.log(`Moved ${draggedItem.name} to seq: ${newSeq}`);
-
-    // Refresh tabel
     refreshTable();
   }
 
   // ====== CRUD ACTIONS ======
   $scope.btnAddNewFeature = function () {
     _editingId = null;
+    $scope.formFeatureTitle = "Tambah Feature";
+    $scope.btnFeatureLabel = "Simpan";
     $scope.disableAll = false;
-    $scope.formFeatureTitle = "Add Feature";
-    $scope.btnFeatureLabel = "Save";
     $scope.newFeature = {
       name: "",
       code: "",
@@ -415,9 +391,9 @@ export default function featureController($scope, $timeout, $filter) {
     const original = $scope.rawData.find((r) => r.id === row.id);
     if (!original) return;
     _editingId = row.id;
+    $scope.formFeatureTitle = "Ubah Feature";
+    $scope.btnFeatureLabel = "Perbarui";
     $scope.disableAll = false;
-    $scope.formFeatureTitle = "Edit Feature";
-    $scope.btnFeatureLabel = "Update";
     $scope.newFeature = angular.copy(original);
     $scope.newFeatureRoute = original.route || "{}";
     $scope.newFeatureAddInfo = original.add_info || "{}";
@@ -430,9 +406,9 @@ export default function featureController($scope, $timeout, $filter) {
     const original = $scope.rawData.find((r) => r.id === row.id);
     if (!original) return;
     _editingId = row.id;
-    $scope.disableAll = true; // Read Only
     $scope.formFeatureTitle = "Detail Feature";
     $scope.btnFeatureLabel = "";
+    $scope.disableAll = true; // Read Only
     $scope.newFeature = angular.copy(original);
     $scope.newFeatureRoute = original.route || "{}";
     $scope.newFeatureAddInfo = original.add_info || "{}";
@@ -446,53 +422,65 @@ export default function featureController($scope, $timeout, $filter) {
       $scope.closeModal();
       return;
     }
+
     if (!$scope.newFeature.name || !$scope.newFeature.code) {
-      alert("Name and Code required!");
+      alert("Nama dan Kode wajib diisi!");
       return;
     }
-
-    const finalParent =
-      $scope.newFeature.level === 0 ? "0" : $scope.newFeature.parent || "0";
 
     if (_editingId) {
       const index = $scope.rawData.findIndex((r) => r.id === _editingId);
       if (index !== -1) {
+        // Validasi Parent Self
+        const finalParent =
+          $scope.newFeature.level === 0 ? "0" : $scope.newFeature.parent || "0";
         if (finalParent === _editingId) {
-          alert("Cannot set parent to self!");
+          alert("Tidak bisa menjadikan diri sendiri sebagai parent!");
           return;
         }
+
         $scope.rawData[index] = {
           ...$scope.rawData[index],
           ...$scope.newFeature,
-          parent: finalParent,
-          route: $scope.newFeatureRoute,
         };
-        alert("✅ Feature updated!");
+        $scope.rawData[index].route = $scope.newFeatureRoute;
+        alert("✅ Feature berhasil diperbarui!");
       }
     } else {
       const newId = String(Date.now());
+      const finalParent =
+        $scope.newFeature.level === 0 ? "0" : $scope.newFeature.parent || "0";
       const newItem = {
         ...$scope.newFeature,
         id: newId,
-        parent: finalParent,
         route: $scope.newFeatureRoute,
+        parent: finalParent,
       };
       $scope.rawData.push(newItem);
-      alert("✅ Feature added!");
+      alert("✅ Feature berhasil ditambahkan!");
     }
     $scope.closeModal();
     refreshTable();
   };
 
+  // ====== DELETE LOGIC ======
   $scope.deleteSingleFeature = function (id) {
-    $scope.confirmMessage = "Delete this feature and its children?";
+    $scope.confirmMessage = "Apakah Anda yakin ingin menghapus feature ini?";
     $scope.tempDeleteId = id;
+    $scope.tempDeleteType = "single";
     $scope.confirmModal = true;
     $scope.closeAllDropdowns();
   };
 
+  $scope.buttonDeleteSelected = function () {
+    if ($scope.checkedIds.length === 0) return;
+    $scope.tempDeleteType = "multiple";
+    $scope.confirmMessage = `Apakah Anda yakin ingin menghapus ${$scope.checkedIds.length} feature yang dipilih?`;
+    $scope.confirmModal = true;
+  };
+
   $scope.onConfirmDelete = function () {
-    if ($scope.tempDeleteId) {
+    if ($scope.tempDeleteType === "single") {
       const idsToDelete = [$scope.tempDeleteId];
       $scope.rawData.forEach((r) => {
         if (r.parent === $scope.tempDeleteId) idsToDelete.push(r.id);
@@ -500,12 +488,21 @@ export default function featureController($scope, $timeout, $filter) {
       $scope.rawData = $scope.rawData.filter(
         (r) => !idsToDelete.includes(r.id)
       );
-      alert("🗑️ Feature deleted!");
-      $scope.confirmModal = false;
-      refreshTable();
+    } else if ($scope.tempDeleteType === "multiple") {
+      $scope.rawData = $scope.rawData.filter(
+        (r) => !$scope.checkedIds.includes(r.id)
+      );
+      $scope.checkboxes = {};
+      $scope.checkedIds = [];
+      $scope.selectAll = false;
     }
+
+    alert("🗑️ Feature berhasil dihapus!");
+    $scope.confirmModal = false;
+    refreshTable();
   };
 
+  // ====== HELPERS ======
   $scope.toggleExpand = function (id) {
     expanded[id] = !expanded[id];
     refreshTable();
@@ -520,7 +517,7 @@ export default function featureController($scope, $timeout, $filter) {
     }
     const needLevel = lvl - 1;
     $scope.parentOptions = $scope.rawData
-      .filter((r) => r.level === needLevel && r.id !== _editingId)
+      .filter((r) => r.level === needLevel)
       .map((r) => ({ id: r.id, name: r.name, code: r.code }));
   };
 
@@ -528,12 +525,12 @@ export default function featureController($scope, $timeout, $filter) {
     $scope.rawData.forEach((r) => (expanded[r.id] = true));
     refreshTable();
   };
+
   $scope.collapseAll = function () {
     $scope.rawData.forEach((r) => (expanded[r.id] = false));
     refreshTable();
   };
 
-  // Init
   refreshTable();
 }
 

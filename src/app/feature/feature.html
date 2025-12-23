@@ -16,6 +16,14 @@
     >
       <div class="flex flex-wrap items-center gap-2">
         <button
+          ng-if="checkedIds.length > 0"
+          ng-click="buttonDeleteSelected()"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-sm transition animate-fade-in"
+        >
+          <i class="fa fa-trash"></i> Delete ({{checkedIds.length}})
+        </button>
+
+        <button
           ng-click="btnAddNewFeature()"
           class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm transition flex items-center gap-2"
         >
@@ -42,7 +50,7 @@
         <input
           type="text"
           ng-model="fsearch"
-          ng-change="refreshTable()"
+          ng-change="oncheck()"
           class="w-full pl-9 p-2 text-sm border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
           placeholder="Search feature..."
         />
@@ -57,24 +65,42 @@
           class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-700 dark:text-gray-200 sticky top-0 z-10"
         >
           <tr>
-            <th class="px-6 py-3">Name</th>
-            <th class="px-6 py-3">Code</th>
-            <th class="px-6 py-3">Type</th>
-            <th class="px-6 py-3">Level</th>
+            <th class="px-6 py-3 w-8 text-center">
+              <input
+                type="checkbox"
+                ng-model="selectAll"
+                ng-change="toggleSelectAll()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </th>
+            <th class="px-6 py-3 font-bold">Name</th>
+            <th class="px-6 py-3 font-bold">Code</th>
+            <th class="px-6 py-3 font-bold">Type</th>
+            <th class="px-6 py-3 font-bold">Level</th>
             <th class="px-6 py-3 text-center w-24">Action</th>
           </tr>
         </thead>
         <tbody>
           <tr
             ng-repeat="row in featureContent track by row.id"
-            class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-move"
             data-id="{{row.id}}"
           >
+            <td class="px-6 py-4 text-center">
+              <input
+                type="checkbox"
+                ng-model="checkboxes[row.id]"
+                ng-change="oncheck()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </td>
+
             <td
               class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap"
             >
               <div class="flex items-center">
                 <div ng-style="{'width': (row._level * 24) + 'px'}"></div>
+
                 <button
                   type="button"
                   ng-if="row._hasChildren"
@@ -87,6 +113,7 @@
                   ></i>
                 </button>
                 <span ng-if="!row._hasChildren" class="w-6 mr-2"></span>
+
                 <i
                   class="{{row.icon}} mr-2 text-gray-400 dark:text-gray-500 text-xs"
                 ></i>
@@ -151,7 +178,7 @@
           </tr>
           <tr ng-if="featureContent.length === 0">
             <td
-              colspan="5"
+              colspan="6"
               class="text-center py-8 text-gray-400 dark:text-gray-500"
             >
               No feature data available
@@ -159,6 +186,19 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div
+      class="mt-4 text-sm text-gray-500 dark:text-gray-400 flex justify-between items-center"
+      ng-if="featureContent.length > 0"
+    >
+      <span>Showing {{(featureContent).length}} items</span>
+      <span
+        ng-if="checkedIds.length > 0"
+        class="font-semibold text-teal-600 dark:text-teal-400"
+      >
+        {{checkedIds.length}} item(s) selected
+      </span>
     </div>
   </div>
 
@@ -198,7 +238,7 @@
                 ng-disabled="disableAll"
                 required
                 placeholder="e.g. Dashboard"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
             <div>
@@ -212,127 +252,80 @@
                 ng-disabled="disableAll"
                 required
                 placeholder="e.g. HOME"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >Icon (fa class)</label
-              >
-              <input
+              <label class="block mb-2 text-sm font-medium dark:text-white"
+                >Icon</label
+              ><input
                 type="text"
                 ng-model="newFeature.icon"
                 ng-disabled="disableAll"
-                placeholder="fa-solid fa-house"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >URL</label
-              >
-              <input
+              ><input
                 type="text"
                 ng-model="newFeature.url"
                 ng-disabled="disableAll"
-                placeholder="/home"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >Level <span class="text-red-500">*</span></label
-              >
-              <input
+              <label class="block mb-2 text-sm font-medium dark:text-white"
+                >Level</label
+              ><input
                 type="number"
                 ng-model="newFeature.level"
                 ng-disabled="disableAll"
                 ng-change="updateParentOptions()"
-                required
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >Type <span class="text-red-500">*</span></label
-              >
-              <select
+              <label class="block mb-2 text-sm font-medium dark:text-white"
+                >Type</label
+              ><select
                 ng-model="newFeature.type"
-                ng-options="t.val as t.label for t in typeOptions"
                 ng-disabled="disableAll"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                ng-options="t.val as t.label for t in typeOptions"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               ></select>
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >Sequence</label
-              >
-              <input
+              <label class="block mb-2 text-sm font-medium dark:text-white"
+                >Seq</label
+              ><input
                 type="number"
                 ng-model="newFeature.seq"
                 ng-disabled="disableAll"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
           </div>
 
           <div class="mb-4">
-            <label
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >Parent Feature</label
+            <label class="block mb-2 text-sm font-medium dark:text-white"
+              >Parent</label
             >
             <select
               ng-model="newFeature.parent"
               ng-disabled="disableAll"
               ng-options="r.id as (r.name + ' (' + r.code + ')') for r in parentOptions"
-              class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
             >
-              <option value="">-- No Parent (Root) --</option>
+              <option value="">-- Root --</option>
             </select>
-            <p
-              class="mt-1 text-xs text-gray-500 dark:text-gray-400"
-              ng-if="newFeature.level > 0"
-            >
-              Selecting parent from Level {{newFeature.level - 1}}
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >Route (JSON)</label
-              >
-              <textarea
-                ng-model="newFeatureRoute"
-                ng-disabled="disableAll"
-                rows="3"
-                class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              ></textarea>
-            </div>
-            <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >Additional Info (JSON)</label
-              >
-              <textarea
-                ng-model="newFeatureAddInfo"
-                ng-disabled="disableAll"
-                rows="3"
-                class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              ></textarea>
-            </div>
           </div>
 
           <div
@@ -341,9 +334,9 @@
             <button
               type="button"
               ng-click="closeModal()"
-              class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:bg-gray-700 dark:text-white"
             >
-              Close
+              {{ disableAll ? 'Close' : 'Cancel' }}
             </button>
             <button
               type="submit"

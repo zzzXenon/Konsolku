@@ -13,12 +13,22 @@
     <div
       class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"
     >
-      <button
-        ng-click="buttonAddNewRole()"
-        class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2 shadow-sm transition"
-      >
-        <i class="fa fa-plus"></i> Add Role
-      </button>
+      <div class="flex gap-2">
+        <button
+          ng-if="checkedIds.length > 0"
+          ng-click="buttonDeleteSelected()"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-sm transition animate-fade-in"
+        >
+          <i class="fa fa-trash"></i> Delete ({{checkedIds.length}})
+        </button>
+
+        <button
+          ng-click="buttonAddNewRole()"
+          class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2 shadow-sm transition"
+        >
+          <i class="fa fa-plus"></i> Add Role
+        </button>
+      </div>
 
       <div class="relative w-full sm:w-72">
         <i
@@ -27,6 +37,7 @@
         <input
           type="text"
           ng-model="searchRole"
+          ng-change="oncheck()"
           class="w-full pl-9 p-2 text-sm border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
           placeholder="Search role..."
         />
@@ -41,6 +52,14 @@
           class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-700 dark:text-gray-200 sticky top-0 z-10"
         >
           <tr>
+            <th class="px-6 py-3 w-8 text-center">
+              <input
+                type="checkbox"
+                ng-model="selectAll"
+                ng-change="toggleSelectAll()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </th>
             <th class="px-6 py-3">Name</th>
             <th class="px-6 py-3 text-center w-24">Action</th>
           </tr>
@@ -51,6 +70,15 @@
             ng-repeat="row in content | filter:searchRole"
             class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
+            <td class="px-6 py-4 text-center">
+              <input
+                type="checkbox"
+                ng-model="checkboxes[row[0]]"
+                ng-change="oncheck()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </td>
+
             <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
               {{ row[1] }}
             </td>
@@ -101,7 +129,7 @@
 
           <tr ng-if="content.length === 0">
             <td
-              colspan="2"
+              colspan="3"
               class="text-center py-8 text-gray-400 dark:text-gray-500"
             >
               No role data available
@@ -109,6 +137,19 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div
+      class="mt-4 text-sm text-gray-500 dark:text-gray-400 flex justify-between items-center"
+      ng-if="content.length > 0"
+    >
+      <span>Showing {{(content | filter:searchRole).length}} items</span>
+      <span
+        ng-if="checkedIds.length > 0"
+        class="font-semibold text-teal-600 dark:text-teal-400"
+      >
+        {{checkedIds.length}} item(s) selected
+      </span>
     </div>
   </div>
 
@@ -147,7 +188,7 @@
                 ng-model="newData[0]"
                 ng-disabled="isDetailModal"
                 required
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors disabled:opacity-60"
                 placeholder="e.g. Admin"
               />
             </div>
@@ -160,7 +201,7 @@
               <select
                 ng-model="newData[1]"
                 ng-disabled="isDetailModal"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors disabled:opacity-60"
               >
                 <option value="0">0 (New Role)</option>
                 <option value="1">1 (Active)</option>
@@ -177,7 +218,7 @@
               <select
                 ng-model="newData[2]"
                 ng-disabled="isDetailModal"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors disabled:opacity-60"
               >
                 <option value="0">0 (System)</option>
                 <option value="1">1 (App)</option>
@@ -192,7 +233,7 @@
               <input
                 ng-model="newData[3]"
                 ng-disabled="isDetailModal"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors disabled:opacity-60"
                 placeholder="e.g. UUID"
               />
             </div>
@@ -207,7 +248,7 @@
               ng-model="newData[4]"
               ng-disabled="isDetailModal"
               rows="2"
-              class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+              class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors disabled:opacity-60"
               placeholder="e.g. Remark"
             ></textarea>
           </div>
@@ -221,7 +262,7 @@
               ng-model="newData[5]"
               ng-disabled="isDetailModal"
               rows="3"
-              class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+              class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors disabled:opacity-60"
               placeholder='e.g. {"key" : "Value"}'
             ></textarea>
           </div>
