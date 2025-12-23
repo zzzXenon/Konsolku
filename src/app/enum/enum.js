@@ -52,7 +52,6 @@ export default function cEnum($scope, $q, $timeout) {
 	$scope.newDataEnumDetailLang = [];
 	$scope.tempData = [];
     
-    // Header definitions
 	$scope.enumHeaderHeader = ["Multi Language", "Enum Type", "Flag", "Default Language", "Description"];
 	$scope.enumDetailHeader = ["Flag", "Sequence", "Code", "Description"];
 	$scope.enumDetailLangHeader = ["Language Code", "Description"];
@@ -95,7 +94,6 @@ export default function cEnum($scope, $q, $timeout) {
 
 	const deleteMultipleEnumHeader = async (ids) => {
         return new Promise(resolve => {
-            // FIX: Was mockDetails, changed to mockHeaders
             mockHeaders = mockHeaders.filter(row => !ids.includes(row[0]));
             $timeout(() => resolve(true), 200);
         });
@@ -103,7 +101,6 @@ export default function cEnum($scope, $q, $timeout) {
 	
 	///. DETAIL
 	const getEnumDetail = async (headerId) => {
-        // Filter by HeaderID (index 1)
         const filtered = mockDetails.filter(row => row[1] === headerId);
         return new Promise(resolve => $timeout(() => resolve(filtered), 200));
     };
@@ -128,7 +125,6 @@ export default function cEnum($scope, $q, $timeout) {
     const deleteSingleEnumDetail = async (id) => {
         return new Promise(resolve => {
             mockDetails = mockDetails.filter(row => row[0] !== id);
-            // Cascade delete languages
             mockDetailLangs = mockDetailLangs.filter(row => row[1] !== id);
             $timeout(() => resolve(true), 200);
         });
@@ -143,7 +139,6 @@ export default function cEnum($scope, $q, $timeout) {
 
 	///. DETAIL LANG
 	const getEnumDetailLang = async (detailId) => {
-        // Filter by DetailID (index 1)
         const filtered = mockDetailLangs.filter(row => row[1] === detailId);
         return new Promise(resolve => $timeout(() => resolve(filtered), 200));
     };
@@ -193,19 +188,14 @@ export default function cEnum($scope, $q, $timeout) {
             switch (option) {
                 case "header":
                     $scope.filterMode = 'header';
-                    // FIX: Updated indices to match mockHeaders: [ID, Multi, Type, Flag, Lang, Desc]
                     indexToKeep = [0, 1, 2, 3, 4, 5]; 
                     break;
                 case "detail":
                     $scope.filterMode = 'detail';
-                    // Match mockDetails: [ID, HeaderID, Flag, Seq, Code, Desc]
-                    // Display: [ID, Flag, Seq, Code, Desc]
                     indexToKeep = [0, 2, 3, 4, 5];
                     break;
 				case "detailLang":
 					$scope.filterMode = 'detailLang';
-                    // Match mockDetailLangs: [ID, DetailID, Code, Desc]
-                    // Display: [ID, Code, Desc]
 					indexToKeep = [0, 2, 3]; 
 					break;
                 default: return [];
@@ -242,15 +232,10 @@ export default function cEnum($scope, $q, $timeout) {
 	});
 
 	$scope.liveUpdateFlagInHeader = async (row) => {
-        // row[3] is the Flag index in display data (check filterData)
-        // Note: 'row' here is a reference to the display object. 
-        // We need to update the source of truth (mockHeaders).
         const id = row[0];
         const index = mockHeaders.findIndex(r => r[0] === id);
         if(index !== -1) {
-            // Toggle the flag (index 3 in mockHeaders)
             mockHeaders[index][3] = mockHeaders[index][3] === 1 ? 0 : 1;
-            // Update the display row manually to reflect instant change
             row[3] = mockHeaders[index][3]; 
             $scope.toastOk("Flag updated");
         }
@@ -271,7 +256,7 @@ export default function cEnum($scope, $q, $timeout) {
         const index = mockDetails.findIndex(r => r[0] === id);
         if(index !== -1) {
             mockDetails[index][2] = mockDetails[index][2] === 1 ? 0 : 1;
-            row[1] = mockDetails[index][2]; // row[1] is Flag in display
+            row[1] = mockDetails[index][2];
             $scope.toastOk("Detail Flag updated");
         }
     };
@@ -287,7 +272,6 @@ export default function cEnum($scope, $q, $timeout) {
         }
     };
 
-    // Close menu when clicking anywhere else
     window.addEventListener('click', () => {
         if ($scope.activeMenuId !== null) {
             $scope.activeMenuId = null;
@@ -295,7 +279,6 @@ export default function cEnum($scope, $q, $timeout) {
         }
     });
 
-	// CONFIRMATION MODAL
 	$scope.confirmAction = (message) => {
 		const deferred = $q.defer();
 		$scope.confirmModal = true;
@@ -322,13 +305,11 @@ export default function cEnum($scope, $q, $timeout) {
             await initApp();
 		} else if (table === "detail") {
 			await deleteMultipleEnumDetail($scope.checkedIds);
-            // Refresh detail view
             const raw = await getEnumDetail($scope.currEnumHeaderId);
             $scope.enumDetailContent = filterData(raw, "detail");
             $scope.$apply();
 		} else if (table === "detailLang") {
 			await deleteMultipleEnumDetailLang($scope.checkedIds);
-            // Refresh lang view
             const raw = await getEnumDetailLang($scope.currEnumDetailId);
             $scope.enumDetailLangContent = filterData(raw, "detailLang");
             $scope.$apply();
@@ -339,7 +320,6 @@ export default function cEnum($scope, $q, $timeout) {
 	//. PUBLIC/TEMPLATE FUNCTIONS
 	///. ENUM HEADER
 	$scope.btnAddNewEnumHeader = () => {
-        // [Multi, Type, Flag, DefaultLang, Desc, JSON, Remark]
         $scope.newDataEnumHeader = [0, 1, 1, "EN", "", "{}", ""]; 
         $scope.showModalFormEnumHeader = true;
         $scope.formEnumHeaderTitle = "Add New Enum";
@@ -348,21 +328,18 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
 	$scope.btnEditEnumHeader = (row) => {
-        // row is display data. We need raw data for editing.
         const id = row[0];
         const raw = mockHeaders.find(r => r[0] === id);
         
-        // Copy raw data to form model
-        $scope.newDataEnumHeader = [...raw]; // Index 0 is ID
+        $scope.newDataEnumHeader = [...raw];
         
         $scope.formEnumHeaderTitle = "Edit Header";
         $scope.btnEnumHeaderLabel = "Update";
-        $scope.tempData = raw; // Use raw as temp to signal 'edit mode'
+        $scope.tempData = raw;
         $scope.showModalFormEnumHeader = true;
     };
 
     $scope.submitFormEnumHeader = async () => {
-        // newDataEnumHeader contains [ID, Multi, Type, Flag, Lang, Desc, JSON, Remark]
         const formData = $scope.newDataEnumHeader;
         
         if (!formData[5]) { $scope.toastWarn("Description Required"); return; }
@@ -394,7 +371,6 @@ export default function cEnum($scope, $q, $timeout) {
 
 	///. ENUM DETAIL
 	$scope.btnAddNewEnumDetail = () => {
-        // [HeaderID, Flag, Seq, Code, Desc, Unused]
         $scope.newDataEnumDetail = [$scope.currEnumHeaderId, 1, 0, "", "", null];
         $scope.formEnumDetailTitle = "Add New Detail";
         $scope.btnEnumDetailLabel = "Add";
@@ -414,13 +390,11 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
     $scope.submitFormEnumDetail = async () => {
-        // [ID, HeaderID, Flag, Seq, Code, Desc, Unused]
         if (!$scope.newDataEnumDetail[4]) { $scope.toastWarn("Code is required!"); return; }
         if (!$scope.newDataEnumDetail[5]) { $scope.toastWarn("Description is required!"); return; }
 
         try {
             if ($scope.tempData.length === 0) {
-                // Add mode: remove undefined ID if present, pass rest
                 await addEnumDetail($scope.newDataEnumDetail); 
                 $scope.toastOk("Detail added.");
             } else {
@@ -452,8 +426,7 @@ export default function cEnum($scope, $q, $timeout) {
 
     ///. ENUM DETAIL LANG
     $scope.btnShowEnumDetailLang = async (row) => {
-        $scope.currEnumDetailId = row[0]; // Detail ID
-        // Note: row[4] is Description in Detail view
+        $scope.currEnumDetailId = row[0];
         $scope.currEnumDetailDesc = row[4]; 
         
         $scope.pageTitle = `Enum Detail Language: ${row[4]}`;
@@ -467,7 +440,6 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
     $scope.btnAddNewEnumDetailLang = () => {
-        // [DetailID, LangCode, Desc]
         $scope.newDataEnumDetailLang = [$scope.currEnumDetailId, "EN", ""];
         $scope.formEnumDetailLangTitle = "Add Translation";
         $scope.btnEnumDetailLangLabel = "Add";
@@ -487,7 +459,6 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
     $scope.submitFormEnumDetailLang = async () => {
-        // [ID, DetailID, Code, Desc]
         if (!$scope.newDataEnumDetailLang[3]) { $scope.toastWarn("Description is required!"); return; }
 
         try {
@@ -523,22 +494,18 @@ export default function cEnum($scope, $q, $timeout) {
     $scope.gotoPreviousPage = async () => {
         $scope.clearSelection();
         if ($scope.showTableEnumDetailLang) {
-            // Level 3 -> Level 2
             $scope.showTableEnumDetailLang = false;
             $scope.showTableEnumDetail = true;
             $scope.pageTitle = `Enum Detail: ${$scope.currEnumHeaderDesc}`;
             
-            // Refresh Level 2 Data
             const raw = await getEnumDetail($scope.currEnumHeaderId);
             $scope.enumDetailContent = filterData(raw, "detail");
         } 
         else if ($scope.showTableEnumDetail) {
-            // Level 2 -> Level 1
             $scope.showTableEnumDetail = false;
             $scope.showTableEnumHeader = true;
             $scope.pageTitle = "Enum Header";
             
-            // Refresh Level 1 Data
             await initApp();
         }
         $scope.$apply();
@@ -579,7 +546,6 @@ export default function cEnum($scope, $q, $timeout) {
         if (newVal !== oldVal) $scope.syncSelection();
     }, true);
 
-    // Sorting
     $scope.sortData = function (colIndex) {
         if ($scope.sortColumn === colIndex) $scope.reverseSort = !$scope.reverseSort;
         else {
