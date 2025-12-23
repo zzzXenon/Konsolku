@@ -82,11 +82,18 @@
                   class="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-20 overflow-hidden animate-fade-in-down"
                 >
                   <button
+                    ng-click="buttonDetailPerson(p)"
+                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
+                  >
+                    <i class="fa fa-eye text-blue-600 dark:text-blue-400"></i>
+                    Detail
+                  </button>
+                  <button
                     ng-click="buttonPersonIdentity(p)"
                     class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     <i
-                      class="fa fa-id-card text-blue-600 dark:text-blue-400"
+                      class="fa fa-id-card text-purple-600 dark:text-purple-400"
                     ></i>
                     Identity
                   </button>
@@ -269,8 +276,9 @@
               >
               <select
                 ng-model="formData.nameType"
+                ng-disabled="isDetail"
                 ng-options="o.id as o.name for o in nameTypeOptions"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               ></select>
             </div>
             <div>
@@ -281,8 +289,9 @@
               <input
                 type="text"
                 ng-model="formData.fullName"
-                placeholder="e.g. John Steven Doe"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                ng-disabled="true"
+                placeholder="Auto Generated"
+                class="w-full p-2.5 border rounded-lg bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white cursor-not-allowed"
               />
             </div>
           </div>
@@ -296,9 +305,10 @@
               <input
                 type="text"
                 ng-model="formData.firstName"
+                ng-disabled="isDetail"
                 placeholder="e.g. John"
                 required
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
             <div>
@@ -309,8 +319,9 @@
               <input
                 type="text"
                 ng-model="formData.middleName"
+                ng-disabled="isDetail"
                 placeholder="e.g. Steven"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
             <div>
@@ -321,8 +332,9 @@
               <input
                 type="text"
                 ng-model="formData.lastName"
+                ng-disabled="isDetail"
                 placeholder="e.g. Doe"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
           </div>
@@ -336,8 +348,9 @@
               <input
                 type="text"
                 ng-model="formData.prefixTitle"
+                ng-disabled="isDetail"
                 placeholder="e.g. Dr."
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
             <div>
@@ -348,8 +361,9 @@
               <input
                 type="text"
                 ng-model="formData.suffixTitle"
+                ng-disabled="isDetail"
                 placeholder="e.g. S.H"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               />
             </div>
           </div>
@@ -362,9 +376,10 @@
               >
               <textarea
                 ng-model="formData.remark"
+                ng-disabled="isDetail"
                 rows="3"
                 placeholder="e.g. Remark"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               ></textarea>
             </div>
             <div>
@@ -374,9 +389,10 @@
               >
               <textarea
                 ng-model="formData.addInfo"
+                ng-disabled="isDetail"
                 rows="3"
                 placeholder='e.g. {"key": "Value"}'
-                class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
               ></textarea>
             </div>
           </div>
@@ -387,15 +403,16 @@
             <button
               type="button"
               ng-click="closePersonModal()"
-              class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors"
             >
-              Cancel
+              {{ isDetail ? 'Close' : 'Cancel' }}
             </button>
             <button
               type="submit"
+              ng-if="!isDetail"
               class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium transition"
             >
-              {{buttonLabel}}
+              {{ buttonLabel }}
             </button>
           </div>
         </form>

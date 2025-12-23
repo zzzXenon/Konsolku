@@ -12,6 +12,10 @@ export default function personController($scope, $filter) {
   $scope.showConfirmModal = false;
   $scope.verifyEmailModal = false;
 
+  // UI Logic Flags
+  $scope.isEdit = false;
+  $scope.isDetail = false; // Flag baru untuk mode Read-Only
+
   // Data Models
   $scope.formData = {};
   $scope.formIdentityData = {};
@@ -24,19 +28,14 @@ export default function personController($scope, $filter) {
   $scope.openDropdownId = null;
 
   $scope.toggleDropdown = function (id) {
-    if ($scope.openDropdownId === id) {
-      $scope.openDropdownId = null;
-    } else {
-      $scope.openDropdownId = id;
-    }
+    $scope.openDropdownId = $scope.openDropdownId === id ? null : id;
   };
 
   $scope.closeAllDropdowns = function () {
     $scope.openDropdownId = null;
   };
 
-  // --- AUTOMATIC FULLNAME GENERATOR (FIX) ---
-  // Fungsi ini akan memantau perubahan pada field nama dan mengisi fullName secara otomatis
+  // --- AUTOMATIC FULLNAME GENERATOR ---
   $scope.$watchGroup(
     [
       "formData.prefixTitle",
@@ -46,18 +45,13 @@ export default function personController($scope, $filter) {
       "formData.suffixTitle",
     ],
     function (newValues) {
-      // Jika formData belum siap, hentikan
-      if (!$scope.formData) return;
+      if (!$scope.formData || $scope.isDetail) return; // Jangan update otomatis saat mode detail/view
 
-      // Ambil nilai terbaru
       const [prefix, first, middle, last, suffix] = newValues;
-
-      // Gabungkan bagian nama yang tidak kosong
       const parts = [prefix, first, middle, last, suffix].filter(
         (part) => part && String(part).trim() !== ""
       );
 
-      // Update field fullName di layar
       $scope.formData.fullName = parts.join(" ");
     }
   );
@@ -142,19 +136,20 @@ export default function personController($scope, $filter) {
   $scope.closeConfirmModal = function () {
     $scope.showConfirmModal = false;
     $scope.tempDeleteId = null;
-    $scope.tempDeleteType = null;
   };
   $scope.closeVerifyModal = function () {
     $scope.verifyEmailModal = false;
   };
 
   // ====== CRUD PERSON ======
+
+  // 1. ADD
   $scope.buttonAddNewPerson = function () {
     $scope.formHeader = "Add New Person";
     $scope.buttonLabel = "Add Person";
     $scope.isEdit = false;
+    $scope.isDetail = false; // Pastikan mode edit aktif
 
-    // Reset form
     $scope.formData = {
       id: null,
       nameType: 1,
@@ -173,17 +168,37 @@ export default function personController($scope, $filter) {
     $scope.closeAllDropdowns();
   };
 
+  // 2. EDIT
   $scope.buttonEditPerson = function (person) {
     $scope.formHeader = "Edit Person";
     $scope.buttonLabel = "Update Person";
     $scope.isEdit = true;
+    $scope.isDetail = false; // Pastikan mode edit aktif
     $scope.formData = angular.copy(person);
     $scope.showPersonModal = true;
     $scope.closeAllDropdowns();
   };
 
+  // 3. DETAIL (NEW)
+  $scope.buttonDetailPerson = function (person) {
+    $scope.formHeader = "Person Details";
+    $scope.buttonLabel = ""; // Tidak butuh tombol save
+    $scope.isEdit = false;
+    $scope.isDetail = true; // Aktifkan mode Read-Only
+
+    $scope.formData = angular.copy(person);
+    $scope.showPersonModal = true;
+    $scope.closeAllDropdowns();
+  };
+
+  // 4. SUBMIT
   $scope.submitPerson = function () {
-    // Logic fullName juga dijalankan di sini sebagai fallback
+    if ($scope.isDetail) {
+      $scope.closePersonModal();
+      return;
+    }
+
+    // Generate Fullname (Final Check)
     const { prefixTitle, firstName, middleName, lastName, suffixTitle } =
       $scope.formData;
     const parts = [
@@ -211,6 +226,7 @@ export default function personController($scope, $filter) {
     $scope.closePersonModal();
   };
 
+  // 5. DELETE
   $scope.buttonDeletePerson = function (id) {
     $scope.tempDeleteId = id;
     $scope.tempDeleteType = "person";
