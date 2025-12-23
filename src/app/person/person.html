@@ -14,12 +14,22 @@
     <div
       class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"
     >
-      <button
-        ng-click="buttonAddNewPerson()"
-        class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2 shadow-sm transition"
-      >
-        <i class="fa fa-plus"></i> Add Person
-      </button>
+      <div class="flex gap-2">
+        <button
+          ng-if="checkedIds.length > 0"
+          ng-click="buttonDeleteSelected()"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-sm transition animate-fade-in"
+        >
+          <i class="fa fa-trash"></i> Delete ({{checkedIds.length}})
+        </button>
+
+        <button
+          ng-click="buttonAddNewPerson()"
+          class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2 shadow-sm transition"
+        >
+          <i class="fa fa-plus"></i> Add Person
+        </button>
+      </div>
 
       <div class="relative w-full sm:w-72">
         <i
@@ -28,6 +38,7 @@
         <input
           type="text"
           ng-model="fsearch"
+          ng-change="oncheck()"
           class="w-full pl-9 p-2 text-sm border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
           placeholder="Search person..."
         />
@@ -42,9 +53,17 @@
           class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-700 dark:text-gray-200 sticky top-0 z-10"
         >
           <tr>
-            <th class="px-6 py-3">Full Name</th>
-            <th class="px-6 py-3">Remark</th>
-            <th class="px-6 py-3">Status</th>
+            <th class="px-6 py-3 w-8 text-center">
+              <input
+                type="checkbox"
+                ng-model="selectAll"
+                ng-change="toggleSelectAll()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </th>
+            <th class="px-6 py-3 font-bold">Full Name</th>
+            <th class="px-6 py-3 font-bold">Remark</th>
+            <th class="px-6 py-3 font-bold">Status</th>
             <th class="px-6 py-3 text-center w-24">Action</th>
           </tr>
         </thead>
@@ -53,6 +72,15 @@
             ng-repeat="p in persons | filter:fsearch track by p.id"
             class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
+            <td class="px-6 py-4 text-center">
+              <input
+                type="checkbox"
+                ng-model="checkboxes[p.id]"
+                ng-change="oncheck()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </td>
+
             <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
               {{p.fullName}}
             </td>
@@ -79,21 +107,30 @@
 
                 <div
                   ng-show="openDropdownId === p.id"
-                  class="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-20 overflow-hidden animate-fade-in-down"
+                  class="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-20 overflow-hidden animate-fade-in-down"
                 >
                   <button
                     ng-click="buttonDetailPerson(p)"
                     class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
-                    <i class="fa fa-eye text-blue-600 dark:text-blue-400"></i>
+                    <i
+                      class="fa fa-eye text-blue-600 dark:text-blue-400 w-4"
+                    ></i>
                     Detail
+                  </button>
+                  <button
+                    ng-click="butttonDetailPersonOrganization(p)"
+                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
+                  >
+                    <i class="fa fa-sitemap text-orange-500 w-4"></i>
+                    Organization
                   </button>
                   <button
                     ng-click="buttonPersonIdentity(p)"
                     class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     <i
-                      class="fa fa-id-card text-purple-600 dark:text-purple-400"
+                      class="fa fa-id-card text-purple-600 dark:text-purple-400 w-4"
                     ></i>
                     Identity
                   </button>
@@ -102,7 +139,7 @@
                     class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     <i
-                      class="fa fa-pencil text-green-600 dark:text-green-400"
+                      class="fa fa-pencil text-green-600 dark:text-green-400 w-4"
                     ></i>
                     Edit
                   </button>
@@ -113,22 +150,27 @@
                     ng-click="buttonDeletePerson(p.id)"
                     class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2 text-red-600 dark:text-red-400"
                   >
-                    <i class="fa fa-trash"></i> Delete
+                    <i class="fa fa-trash w-4"></i> Delete
                   </button>
                 </div>
               </div>
             </td>
           </tr>
-          <tr ng-if="persons.length === 0">
-            <td
-              colspan="4"
-              class="text-center py-8 text-gray-400 dark:text-gray-500"
-            >
-              No data available
-            </td>
-          </tr>
         </tbody>
       </table>
+    </div>
+
+    <div
+      class="mt-4 text-sm text-gray-500 dark:text-gray-400 flex justify-between items-center"
+      ng-if="persons.length > 0"
+    >
+      <span>Showing {{(persons | filter:fsearch).length}} items</span>
+      <span
+        ng-if="checkedIds.length > 0"
+        class="font-semibold text-teal-600 dark:text-teal-400"
+      >
+        {{checkedIds.length}} item(s) selected
+      </span>
     </div>
   </div>
 
@@ -142,20 +184,29 @@
       <div class="flex gap-3">
         <button
           ng-click="buttonBackToPerson()"
-          class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center gap-2"
         >
-          <i class="fa fa-chevron-left mr-1"></i> Back
+          <i class="fa fa-chevron-left"></i> Back
         </button>
+
+        <button
+          ng-if="checkedIdsIdentity.length > 0"
+          ng-click="buttonDeleteSelectedIdentity()"
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 shadow-sm transition animate-fade-in"
+        >
+          <i class="fa fa-trash"></i> Delete ({{checkedIdsIdentity.length}})
+        </button>
+
         <button
           ng-click="buttonAddNewPersonIdentity()"
-          class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm transition"
+          class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm transition flex items-center gap-2"
         >
           <i class="fa fa-plus"></i> Add Identity
         </button>
       </div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">
+      <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
         User:
-        <span class="font-semibold text-teal-600 dark:text-teal-400"
+        <span class="font-bold text-teal-600 dark:text-teal-400"
           >{{activePerson.fullName}}</span
         >
       </div>
@@ -166,13 +217,24 @@
     >
       <table class="w-full text-sm text-left text-gray-600 dark:text-gray-300">
         <thead
-          class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-700 dark:text-gray-200"
+          class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-700 dark:text-gray-200 sticky top-0"
         >
           <tr>
-            <th class="px-6 py-3">Category - Type</th>
-            <th class="px-6 py-3">Value</th>
-            <th class="px-6 py-3">Verified</th>
-            <th class="px-6 py-3 text-center w-24">Action</th>
+            <th class="px-4 py-3 w-8 text-center">
+              <input
+                type="checkbox"
+                ng-model="selectAllIdentity"
+                ng-change="toggleSelectAllIdentity()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+            </th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Value</th>
+            <th class="px-4 py-3">Sequence</th>
+            <th class="px-4 py-3">Remark</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3 text-center w-24">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -180,14 +242,23 @@
             ng-repeat="item in currentIdentities"
             class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
           >
-            <td class="px-6 py-4">
-              {{ getCategoryName(item.category) }} - {{ getTypeName(item.type)
-              }}
+            <td class="px-4 py-3 text-center">
+              <input
+                type="checkbox"
+                ng-model="checkboxesIdentity[item.id]"
+                ng-change="oncheckIdentity()"
+                class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
             </td>
-            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+
+            <td class="px-4 py-3">{{ getCategoryName(item.category) }}</td>
+            <td class="px-4 py-3">{{ getTypeName(item.type) }}</td>
+            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
               {{ item.value }}
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-3">{{ item.sequence || '-' }}</td>
+            <td class="px-4 py-3">{{ item.remark || '-' }}</td>
+            <td class="px-4 py-3">
               <span
                 class="px-2.5 py-0.5 rounded text-xs font-medium"
                 ng-class="item.verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
@@ -196,11 +267,11 @@
               </span>
             </td>
 
-            <td class="px-6 py-4 text-center">
+            <td class="px-4 py-3 text-center">
               <div class="relative inline-block">
                 <button
                   ng-click="toggleDropdown('ident-'+item.id); $event.stopPropagation()"
-                  class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white p-1"
+                  class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white p-1 transition"
                 >
                   <i class="fa fa-ellipsis-h"></i>
                 </button>
@@ -210,19 +281,19 @@
                 >
                   <button
                     ng-click="buttonVerifyPersonIdentity(item)"
-                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
+                    class="w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     <i class="fa fa-envelope text-blue-500"></i> Verify
                   </button>
                   <button
                     ng-click="buttonUpdatePersonIdentity(item)"
-                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
+                    class="w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-gray-200"
                   >
                     <i class="fa fa-pencil text-green-600"></i> Edit
                   </button>
                   <button
                     ng-click="buttonDeletePersonIdentity(item.id)"
-                    class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2 text-red-600"
+                    class="w-full text-left px-4 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2 text-red-600"
                   >
                     <i class="fa fa-trash"></i> Delete
                   </button>
@@ -232,7 +303,7 @@
           </tr>
           <tr ng-if="currentIdentities.length === 0">
             <td
-              colspan="4"
+              colspan="8"
               class="text-center py-8 text-gray-400 dark:text-gray-500"
             >
               No identity data found
@@ -265,7 +336,6 @@
           <i class="fa fa-times text-xl"></i>
         </button>
       </div>
-
       <div class="p-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
         <form ng-submit="submitPerson()">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
@@ -278,7 +348,7 @@
                 ng-model="formData.nameType"
                 ng-disabled="isDetail"
                 ng-options="o.id as o.name for o in nameTypeOptions"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               ></select>
             </div>
             <div>
@@ -290,113 +360,95 @@
                 type="text"
                 ng-model="formData.fullName"
                 ng-disabled="true"
-                placeholder="Auto Generated"
+                placeholder="e.g. John Steven Doe"
                 class="w-full p-2.5 border rounded-lg bg-gray-100 dark:bg-gray-600 dark:border-gray-500 dark:text-white cursor-not-allowed"
               />
             </div>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >First Name / Surname <span class="text-red-500">*</span></label
-              >
-              <input
+              <label class="block mb-2 text-sm font-medium dark:text-white"
+                >First Name / Surname *</label
+              ><input
                 type="text"
                 ng-model="formData.firstName"
                 ng-disabled="isDetail"
                 placeholder="e.g. John"
                 required
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               />
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >Middle Name</label
-              >
-              <input
+              ><input
                 type="text"
                 ng-model="formData.middleName"
                 ng-disabled="isDetail"
                 placeholder="e.g. Steven"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               />
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >Last Name / Personal Name</label
-              >
-              <input
+              ><input
                 type="text"
                 ng-model="formData.lastName"
                 ng-disabled="isDetail"
                 placeholder="e.g. Doe"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               />
             </div>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >Prefix Title</label
-              >
-              <input
+              ><input
                 type="text"
                 ng-model="formData.prefixTitle"
                 ng-disabled="isDetail"
                 placeholder="e.g. Dr."
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               />
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >Suffix Title</label
-              >
-              <input
+              ><input
                 type="text"
                 ng-model="formData.suffixTitle"
                 ng-disabled="isDetail"
                 placeholder="e.g. S.H"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               />
             </div>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >Remark</label
-              >
-              <textarea
+              ><textarea
                 ng-model="formData.remark"
                 ng-disabled="isDetail"
                 rows="3"
                 placeholder="e.g. Remark"
-                class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               ></textarea>
             </div>
             <div>
-              <label
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              <label class="block mb-2 text-sm font-medium dark:text-white"
                 >Additional Information {JSON}</label
-              >
-              <textarea
+              ><textarea
                 ng-model="formData.addInfo"
                 ng-disabled="isDetail"
                 rows="3"
                 placeholder='e.g. {"key": "Value"}'
-                class="w-full p-2.5 border rounded-lg font-mono text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60"
+                class="w-full p-2.5 border rounded-lg focus:ring-teal-500 focus:border-teal-500 font-mono text-xs bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 transition-colors"
               ></textarea>
             </div>
           </div>
-
           <div
             class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700"
           >
@@ -410,12 +462,80 @@
             <button
               type="submit"
               ng-if="!isDetail"
-              class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium transition"
+              class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium transition shadow"
             >
               {{ buttonLabel }}
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <div
+    ng-if="modalOrganization"
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-fade-in"
+    style="background-color: rgba(0, 0, 0, 0.5)"
+  >
+    <div
+      class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100"
+    >
+      <div
+        class="px-6 py-4 flex justify-between items-center bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600"
+      >
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+          Person Organization
+        </h3>
+        <button
+          type="button"
+          ng-click="closeOrgModal()"
+          class="text-gray-400 hover:text-red-500 transition focus:outline-none"
+        >
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+      <div
+        class="p-8 max-h-64 overflow-y-auto custom-scrollbar bg-white dark:bg-gray-800"
+      >
+        <div class="flex items-center mb-6 cursor-pointer">
+          <input
+            type="checkbox"
+            id="org-asix"
+            ng-checked="listdataOrganization.includes(1)"
+            ng-click="toggleOrg(1)"
+            class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 cursor-pointer"
+          />
+          <label
+            for="org-asix"
+            class="ml-3 text-base text-gray-700 dark:text-gray-200 cursor-pointer select-none font-normal"
+            >ASIX</label
+          >
+        </div>
+        <div class="flex items-center mb-2 cursor-pointer">
+          <input
+            type="checkbox"
+            id="org-ipm"
+            ng-checked="listdataOrganization.includes(2)"
+            ng-click="toggleOrg(2)"
+            class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 cursor-pointer"
+          />
+          <label
+            for="org-ipm"
+            class="ml-3 text-base text-gray-700 dark:text-gray-200 cursor-pointer select-none font-normal"
+            >IPM</label
+          >
+        </div>
+      </div>
+      <div
+        class="flex justify-end px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600"
+      >
+        <button
+          type="button"
+          ng-click="buttonUpdatePersonOrg()"
+          class="px-8 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium text-sm"
+        >
+          Update
+        </button>
       </div>
     </div>
   </div>
@@ -437,7 +557,7 @@
           ng-click="closeIdentityModal()"
           class="text-gray-400 hover:text-red-500"
         >
-          <i class="fa fa-times"></i>
+          <i class="fa fa-times text-xl"></i>
         </button>
       </div>
       <div class="p-6">
@@ -454,12 +574,26 @@
               class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white"
             ></select>
           </div>
-          <input
-            type="text"
-            ng-model="formIdentityData.value"
-            placeholder="Value"
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <input
+              type="text"
+              ng-model="formIdentityData.value"
+              placeholder="Value"
+              class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white"
+            />
+            <input
+              type="number"
+              ng-model="formIdentityData.sequence"
+              placeholder="Sequence"
+              class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+          <textarea
+            ng-model="formIdentityData.remark"
+            placeholder="Remark"
+            rows="2"
             class="w-full p-2 mb-4 border rounded-lg dark:bg-gray-700 dark:text-white"
-          />
+          ></textarea>
           <div
             class="flex justify-end gap-3 pt-4 border-t dark:border-gray-700"
           >
@@ -479,6 +613,58 @@
           </div>
         </form>
       </div>
+    </div>
+  </div>
+
+  <div
+    ng-if="verifyEmailModal"
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-fade-in"
+    style="background-color: rgba(0, 0, 0, 0.5)"
+  >
+    <div
+      class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 text-center"
+    >
+      <div
+        class="mx-auto flex items-center justify-center h-16 w-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4"
+      >
+        <i
+          class="fa fa-envelope-open-text text-blue-600 dark:text-blue-400 text-2xl"
+        ></i>
+      </div>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
+        Verify Identity
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-gray-300 mb-4">
+        Enter verification code sent to <br /><span
+          class="font-semibold text-teal-600 dark:text-teal-400"
+          >{{tempEmailIdentity}}</span
+        >
+      </p>
+      <form ng-submit="submitVerify()">
+        <div class="mb-4">
+          <input
+            type="text"
+            ng-model="verifyData.token"
+            required
+            class="w-full p-2.5 text-center text-lg border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+            placeholder="123456"
+          />
+        </div>
+        <div class="flex justify-center gap-3">
+          <button
+            type="button"
+            ng-click="closeVerifyModal()"
+            class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:bg-gray-700 dark:text-white"
+          >
+            Cancel</button
+          ><button
+            type="submit"
+            class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-lg"
+          >
+            Verify
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -507,11 +693,10 @@
         <button
           type="button"
           ng-click="closeConfirmModal()"
-          class="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+          class="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:text-white"
         >
-          Cancel
-        </button>
-        <button
+          Cancel</button
+        ><button
           type="button"
           ng-click="confirmDelete()"
           class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-lg"
