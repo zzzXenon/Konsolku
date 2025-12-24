@@ -1,7 +1,5 @@
 export default function cHome($scope) {
-    $scope.refreshData = function() {
-        alert('Refreshing data...');
-    };
+    console.log("load controller cHome")
 }
 
 cHome.$inject = ['$scope'];

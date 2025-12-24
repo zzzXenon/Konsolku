@@ -7,6 +7,18 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
+    
+    <script>
+      (function() {
+        const userTheme = localStorage.getItem("theme");
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (userTheme === "dark" || (!userTheme && systemTheme)) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      })();
+    </script>
   </head>
 
   <body
@@ -84,11 +96,11 @@
           ng-click="toggleTheme()"
           class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 border shadow-sm select-none bg-white border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:border-gray-500"
         >
-          <i class="fa-solid fa-sun text-yellow-400" ng-if="isDarkMode"></i>
-          <i class="fa-solid fa-moon text-indigo-500" ng-if="!isDarkMode"></i>
+          <i class="fa-solid fa-sun text-yellow-400" ng-show="!isDarkMode"></i>
+          <i class="fa-solid fa-moon text-indigo-500" ng-show="isDarkMode"></i>
 
           <span class="font-medium">
-            {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+            {{ isDarkMode ? 'Dark Mode' : 'Light Mode' }}
           </span>
         </button>
       </div>
