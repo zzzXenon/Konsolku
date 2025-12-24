@@ -4,7 +4,7 @@ export default function roleController($scope, $filter) {
   // ===============================
   // STATE UI
   // ===============================
-  $scope.title = "Role Management";
+  $scope.title = "Role";
   $scope.myModal = false;
   $scope.isDetailModal = false;
   $scope.showDeleteConfirm = false;

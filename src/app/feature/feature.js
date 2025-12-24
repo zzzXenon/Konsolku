@@ -2,7 +2,7 @@ export default function featureController($scope, $timeout, $filter) {
   console.log("Feature Controller Loaded");
 
   // ====== STATE VARIABLES ======
-  $scope.title = "Feature Management";
+  $scope.title = "Feature";
   $scope.isMemproses = false;
   $scope.fsearch = "";
 
