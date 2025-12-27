@@ -16,8 +16,8 @@ export default function cEnum($scope, $q, $timeout) {
     $scope.toastInfo = (msg) => showToast(msg, 'success');
 	
 	let mockHeaders = [
-        [1, 0, 1, 1, 'EN', 'Gender', {}, null, {}, 1],
-        [2, 1, 2, 0, 'EN', 'User Status', {}, null, {}, 1]
+        [1, 0, 1, 1, 'EN', 'Gender', {}, null],
+        [2, 1, 2, 0, 'EN', 'User Status', {}, null]
     ];
 
 	let mockDetails = [
@@ -51,6 +51,7 @@ export default function cEnum($scope, $q, $timeout) {
 	$scope.newDataEnumDetail = [];
 	$scope.newDataEnumDetailLang = [];
 	$scope.tempData = [];
+    $scope.flagSliderLabel = "Active";
     
 	$scope.enumHeaderHeader = ["Multi Language", "Enum Type", "Flag", "Default Language", "Description"];
 	$scope.enumDetailHeader = ["Flag", "Sequence", "Code", "Description"];
@@ -180,8 +181,6 @@ export default function cEnum($scope, $q, $timeout) {
         return option ? option.label : 'Unknown';
     };
 
-	const stringifyAdditionalInfo = (data) => JSON.stringify(data || {}, null, 2);
-
 	const filterData = (rawData, option) => {
         try {
             let indexToKeep = [];
@@ -230,6 +229,12 @@ export default function cEnum($scope, $q, $timeout) {
 			$scope.$apply();
 		}
 	});
+
+    // Update Slider Label Logic for Modal
+    $scope.$watch('newDataEnumDetail[2]', function(newVal) {
+        if (newVal === 1) $scope.flagSliderLabel = "Active";
+        else $scope.flagSliderLabel = "Inactive";
+    });
 
 	$scope.liveUpdateFlagInHeader = async (row) => {
         const id = row[0];
@@ -281,8 +286,11 @@ export default function cEnum($scope, $q, $timeout) {
 
 	$scope.confirmAction = (message) => {
 		const deferred = $q.defer();
-		$scope.confirmModal = true;
-		$scope.confirmMessage = message;
+        
+        $timeout(() => {
+            $scope.confirmModal = true;
+            $scope.confirmMessage = message;
+        });
 
 		$scope.onConfirm = () => {
 			$scope.confirmModal = false;
@@ -298,20 +306,43 @@ export default function cEnum($scope, $q, $timeout) {
 	};
 
 	$scope.deleteSelected = async function (table) {
-        if(!confirm("Delete selected items?")) return;
+        let message = "";
+        const count = $scope.checkedIds.length;
+
+        if (count === 0) return;
+
+        if (table === "header") {
+            message = count > 1 
+                ? "Are you sure you want to delete these enum headers?" 
+                : "Are you sure you want to delete this enum header?";
+        } else if (table === "detail") {
+            message = count > 1 
+                ? "Are you sure you want to delete these enum details?" 
+                : "Are you sure you want to delete this enum detail?";
+        } else if (table === "detailLang") {
+            message = count > 1 
+                ? "Are you sure you want to delete these enum detail languages?" 
+                : "Are you sure you want to delete this enum detail language?";
+        }
+
+        const isConfirmed = await $scope.confirmAction(message);
+        if (!isConfirmed) return;
 
 		if (table === "header") {
 			await deleteMultipleEnumHeader($scope.checkedIds);
             await initApp();
+            $scope.toastOk(count > 1 ? "Enum headers deleted." : "Enum header deleted.");
 		} else if (table === "detail") {
 			await deleteMultipleEnumDetail($scope.checkedIds);
             const raw = await getEnumDetail($scope.currEnumHeaderId);
             $scope.enumDetailContent = filterData(raw, "detail");
+            $scope.toastOk(count > 1 ? "Enum details deleted." : "Enum detail deleted.");
             $scope.$apply();
 		} else if (table === "detailLang") {
 			await deleteMultipleEnumDetailLang($scope.checkedIds);
             const raw = await getEnumDetailLang($scope.currEnumDetailId);
             $scope.enumDetailLangContent = filterData(raw, "detailLang");
+            $scope.toastOk(count > 1 ? "Enum detail languages deleted." : "Enum detail language deleted.");
             $scope.$apply();
 		}
 		$scope.clearSelection();
@@ -320,7 +351,7 @@ export default function cEnum($scope, $q, $timeout) {
 	//. PUBLIC/TEMPLATE FUNCTIONS
 	///. ENUM HEADER
 	$scope.btnAddNewEnumHeader = () => {
-        $scope.newDataEnumHeader = [0, 1, 1, "EN", "", "{}", ""]; 
+        $scope.newDataEnumHeader = [0, 1, 1, 'EN', null, null, null]; 
         $scope.showModalFormEnumHeader = true;
         $scope.formEnumHeaderTitle = "Add New Enum";
         $scope.btnEnumHeaderLabel = "Save";
@@ -330,9 +361,7 @@ export default function cEnum($scope, $q, $timeout) {
 	$scope.btnEditEnumHeader = (row) => {
         const id = row[0];
         const raw = mockHeaders.find(r => r[0] === id);
-        
         $scope.newDataEnumHeader = [...raw];
-        
         $scope.formEnumHeaderTitle = "Edit Header";
         $scope.btnEnumHeaderLabel = "Update";
         $scope.tempData = raw;
@@ -341,11 +370,10 @@ export default function cEnum($scope, $q, $timeout) {
 
     $scope.submitFormEnumHeader = async () => {
         const formData = $scope.newDataEnumHeader;
-        
         if (!formData[5]) { $scope.toastWarn("Description Required"); return; }
 
         if ($scope.tempData.length === 0) {
-            await addEnumHeader(formData); 
+            await addEnumHeader(formData.slice(1)); 
         } else {
             await updateEnumHeader(formData);
         }
@@ -355,15 +383,22 @@ export default function cEnum($scope, $q, $timeout) {
         $scope.toastOk("Saved Successfully");
     };
 
+    $scope.btnDeleteEnumHeader = async (id) => {
+        const isConfirmed = await $scope.confirmAction("Are you sure you want to delete this header?");
+        if (isConfirmed) {
+            await deleteEnumHeader(id);
+            await initApp();
+            $scope.toastOk("Header deleted.");
+        }
+    };
+
 	$scope.btnShowEnumDetail = async (row) => {
         $scope.currEnumHeaderId = row[0];
         $scope.currEnumHeaderDesc = row[5];
         $scope.pageTitle = `Enum Detail: ${row[5]}`;
-        
         $scope.showTableEnumHeader = false;
         $scope.showTableEnumDetail = true;
         $scope.clearSelection();
-        
         const raw = await getEnumDetail(row[0]);
         $scope.enumDetailContent = filterData(raw, "detail");
         $scope.$apply();
@@ -371,7 +406,8 @@ export default function cEnum($scope, $q, $timeout) {
 
 	///. ENUM DETAIL
 	$scope.btnAddNewEnumDetail = () => {
-        $scope.newDataEnumDetail = [$scope.currEnumHeaderId, 1, 0, "", "", null];
+        // [ID, HeaderID, Flag, Seq, Code, Desc, Unused]
+        $scope.newDataEnumDetail = [0, $scope.currEnumHeaderId, 1, 0, "", "", null];
         $scope.formEnumDetailTitle = "Add New Detail";
         $scope.btnEnumDetailLabel = "Add";
         $scope.tempData = [];
@@ -382,7 +418,6 @@ export default function cEnum($scope, $q, $timeout) {
         const id = row[0];
         const raw = mockDetails.find(r => r[0] === id);
         $scope.newDataEnumDetail = [...raw]; 
-        
         $scope.formEnumDetailTitle = "Edit Detail";
         $scope.btnEnumDetailLabel = "Update";
         $scope.tempData = raw;
@@ -395,18 +430,16 @@ export default function cEnum($scope, $q, $timeout) {
 
         try {
             if ($scope.tempData.length === 0) {
-                await addEnumDetail($scope.newDataEnumDetail); 
+                await addEnumDetail($scope.newDataEnumDetail.slice(1)); 
                 $scope.toastOk("Detail added.");
             } else {
                 await updateEnumDetail($scope.newDataEnumDetail);
                 $scope.toastOk("Detail updated.");
             }
-
             $scope.showModalFormEnumDetail = false;
             const raw = await getEnumDetail($scope.currEnumHeaderId);
             $scope.enumDetailContent = filterData(raw, "detail");
             $scope.$apply();
-
         } catch (err) {
             console.error(err);
             $scope.toastErr("Failed to save detail.");
@@ -414,33 +447,33 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
     $scope.deleteEnumDetail = async (id) => {
-        if (!confirm("Are you sure you want to delete this detail?")) return;
-
-        await deleteSingleEnumDetail(id);
-        
-        const raw = await getEnumDetail($scope.currEnumHeaderId);
-        $scope.enumDetailContent = filterData(raw, "detail");
-        $scope.toastOk("Detail deleted.");
-        $scope.$apply();
+        const isConfirmed = await $scope.confirmAction("Are you sure you want to delete this detail?");
+        if (isConfirmed) {
+            await deleteSingleEnumDetail(id);
+            const raw = await getEnumDetail($scope.currEnumHeaderId);
+            $scope.enumDetailContent = filterData(raw, "detail");
+            $scope.toastOk("Detail deleted.");
+            $scope.$apply();
+        }
     };
 
     ///. ENUM DETAIL LANG
     $scope.btnShowEnumDetailLang = async (row) => {
         $scope.currEnumDetailId = row[0];
         $scope.currEnumDetailDesc = row[4]; 
-        
         $scope.pageTitle = `Enum Detail Language: ${row[4]}`;
         $scope.showTableEnumDetail = false;
         $scope.showTableEnumDetailLang = true;
         $scope.clearSelection();
-
         const raw = await getEnumDetailLang(row[0]);
         $scope.enumDetailLangContent = filterData(raw, "detailLang");
         $scope.$apply();
     };
 
     $scope.btnAddNewEnumDetailLang = () => {
-        $scope.newDataEnumDetailLang = [$scope.currEnumDetailId, "EN", ""];
+        // [ID, DetailID, LangCode, Description]
+        // Initialize with ID=0 to prevent index shifting on ADD
+        $scope.newDataEnumDetailLang = [0, $scope.currEnumDetailId, "EN", ""];
         $scope.formEnumDetailLangTitle = "Add Translation";
         $scope.btnEnumDetailLangLabel = "Add";
         $scope.tempData = [];
@@ -451,7 +484,6 @@ export default function cEnum($scope, $q, $timeout) {
         const id = row[0];
         const raw = mockDetailLangs.find(r => r[0] === id);
         $scope.newDataEnumDetailLang = [...raw];
-        
         $scope.formEnumDetailLangTitle = "Edit Translation";
         $scope.btnEnumDetailLangLabel = "Update";
         $scope.tempData = raw;
@@ -459,11 +491,13 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
     $scope.submitFormEnumDetailLang = async () => {
+        // Bindings: [2]=LangCode, [3]=Description
         if (!$scope.newDataEnumDetailLang[3]) { $scope.toastWarn("Description is required!"); return; }
 
         try {
             if ($scope.tempData.length === 0) {
-                await addEnumDetailLang($scope.newDataEnumDetailLang);
+                // Remove placeholder ID (Index 0) before adding
+                await addEnumDetailLang($scope.newDataEnumDetailLang.slice(1));
             } else {
                 await updateEnumDetailLang($scope.newDataEnumDetailLang);
             }
@@ -481,23 +515,23 @@ export default function cEnum($scope, $q, $timeout) {
     };
 
     $scope.deleteEnumDetailLang = async (id) => {
-        if (!confirm("Delete this translation?")) return;
-
-        await deleteSingleEnumDetailLang(id);
-        
-        const raw = await getEnumDetailLang($scope.currEnumDetailId);
-        $scope.enumDetailLangContent = filterData(raw, "detailLang");
-        $scope.toastOk("Translation deleted.");
-        $scope.$apply();
+        const isConfirmed = await $scope.confirmAction("Delete this translation?");
+        if (isConfirmed) {
+            await deleteSingleEnumDetailLang(id);
+            const raw = await getEnumDetailLang($scope.currEnumDetailId);
+            $scope.enumDetailLangContent = filterData(raw, "detailLang");
+            $scope.toastOk("Translation deleted.");
+            $scope.$apply();
+        }
     };
 
+    // --- NAVIGATION & UTILS ---
     $scope.gotoPreviousPage = async () => {
         $scope.clearSelection();
         if ($scope.showTableEnumDetailLang) {
             $scope.showTableEnumDetailLang = false;
             $scope.showTableEnumDetail = true;
             $scope.pageTitle = `Enum Detail: ${$scope.currEnumHeaderDesc}`;
-            
             const raw = await getEnumDetail($scope.currEnumHeaderId);
             $scope.enumDetailContent = filterData(raw, "detail");
         } 
@@ -505,17 +539,16 @@ export default function cEnum($scope, $q, $timeout) {
             $scope.showTableEnumDetail = false;
             $scope.showTableEnumHeader = true;
             $scope.pageTitle = "Enum Header";
-            
             await initApp();
         }
         $scope.$apply();
     };
 
-		$scope.clearSelection = function () {
-			$scope.checkedIds = [];
-			$scope.selectAll = false;
-			$scope.checkboxes = {};
-        };
+    $scope.clearSelection = function () {
+        $scope.checkedIds = [];
+        $scope.selectAll = false;
+        $scope.checkboxes = {};
+    };
 
     $scope.oncheck = function (id, checkedState) {
         if (checkedState) $scope.checkboxes[id] = true;
@@ -530,7 +563,6 @@ export default function cEnum($scope, $q, $timeout) {
         else if ($scope.filterMode === 'detailLang') content = $scope.enumDetailLangContent;
 
         if (!content) return;
-        
         content.forEach(item => {
             if ($scope.selectAll) $scope.checkboxes[item[0]] = true;
             else delete $scope.checkboxes[item[0]];
@@ -558,7 +590,18 @@ export default function cEnum($scope, $q, $timeout) {
         return item[$scope.sortColumn];
     };
 
-	//. INIT APP
+    $scope.toggleMenu = (id, event) => {
+        if (event) event.stopPropagation();
+        $scope.activeMenuId = $scope.activeMenuId === id ? null : id;
+    };
+
+    window.addEventListener('click', () => {
+        if ($scope.activeMenuId !== null) {
+            $scope.activeMenuId = null;
+            $scope.$apply();
+        }
+    });
+
 	const initApp = async () => {
 		try {
 			$scope.rawData = await getEnumHeader();

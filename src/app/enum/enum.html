@@ -88,7 +88,7 @@
                       Edit
                     </a>
 
-                    <a href="" ng-click="deleteEnumHeader(row[0]); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600" role="menuitem">
+                    <a href="" ng-click="btnDeleteEnumHeader(row[0]); toggleMenu(row[0])" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600" role="menuitem">
                       <i class="fa-solid fa-trash w-5 text-red-600 dark:text-red-400"></i>
                       Delete
                     </a>
@@ -115,7 +115,7 @@
           <i class="fa fa-arrow-left"></i> Back
         </button>
         <button ng-if="checkedIds.length" ng-click="deleteSelected('detail')" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition">
-          <i class="fa fa-trash"></i> Delete
+          <i class="fa fa-trash"></i> Delete ({{checkedIds.length}})
         </button>
         <button ng-click="btnAddNewEnumDetail()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition">
           <i class="fa fa-plus"></i> Add Detail
@@ -188,9 +188,19 @@
 
   <div ng-show="showTableEnumDetailLang" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div class="p-4 flex gap-4 border-b border-gray-200 dark:border-gray-700">
-        <button ng-click="gotoPreviousPage()" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition"><i class="fa fa-arrow-left"></i> Back</button>
-        <button ng-click="btnAddNewEnumDetailLang()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition"><i class="fa fa-plus"></i> Add Language</button>
+        <div class="flex gap-2">
+            <button ng-click="gotoPreviousPage()" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition">
+                <i class="fa fa-arrow-left"></i> Back
+            </button>
+            <button ng-if="checkedIds.length" ng-click="deleteSelected('detailLang')" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition">
+                <i class="fa fa-trash"></i> Delete ({{checkedIds.length}})
+            </button>
+            <button ng-click="btnAddNewEnumDetailLang()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition">
+                <i class="fa fa-plus"></i> Add Language
+            </button>
+        </div>
     </div>
+
     <div class="overflow-x-auto">
       <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-900">
@@ -203,8 +213,8 @@
         <tbody>
            <tr ng-repeat="row in enumDetailLangContent" class="hover:bg-gray-50 dark:hover:bg-gray-700">
               <td class="p-4"><input type="checkbox" ng-model="checkboxes[row[0]]" ng-change="oncheck(row[0], checkboxes[row[0]])" class="w-4 h-4 text-teal-600"></td>
-              <td class="px-6 py-4 font-bold">{{row[2]}}</td>
-              <td class="px-6 py-4">{{row[3]}}</td>
+              <td class="px-6 py-4 font-bold">{{row[1]}}</td>
+              <td class="px-6 py-4">{{row[2]}}</td>
               <td class="px-6 py-4 text-right">
               <div class="relative inline-block text-left">
                 <button ng-click="toggleMenu(row[0], $event)" class="text-gray-500 hover:text-teal-600 focus:outline-none transition">
@@ -330,4 +340,23 @@
      </div>
   </div>
 
+</div>
+
+<div ng-show="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"></div>
+  <div class="relative z-10 w-full bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl max-h-full max-w-md text-center">
+    <div class="mb-4">
+        <i class="fa fa-exclamation-circle text-5xl text-gray-300 dark:text-gray-500"></i>
+    </div>
+    <h3 class="mb-6 text-lg font-normal text-gray-500 dark:text-gray-300">{{ confirmMessage }}</h3>
+
+    <div class="flex justify-center gap-4">
+        <button type="button" ng-click="onConfirm()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow-md transition-colors">
+            Yes, I'm sure
+        </button>
+        <button type="button" ng-click="onCancel()" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 transition-colors">
+            No, cancel
+        </button>
+    </div>
+  </div>
 </div>

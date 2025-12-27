@@ -14,11 +14,14 @@ export default function cFlag($scope, $q, $timeout) {
     $scope.toastErr = (msg) => showToast(msg, 'error');
     $scope.toastWarn = (msg) => showToast(msg, 'error');
 	
+    // MOCK DATA
+    // [ID, Multi, Flag, IsUser, Count, Lang, Desc, JSON, Remark]
 	let mockHeaders = [
         [1, 0, 1, 1, 0, 'EN', 'General Settings', '{}', 'System Default'],
         [2, 1, 1, 0, 5, 'EN', 'Account Types', '{}', 'User Defined']
     ];
 
+    // [ID, HeaderID, Flag, Seq, Desc, Remark]
 	let mockDetails = [
         [101, 1, 1, 1, 'Enable Notifications', ''],
         [102, 1, 0, 2, 'Dark Mode', ''],
@@ -26,6 +29,7 @@ export default function cFlag($scope, $q, $timeout) {
         [202, 2, 1, 2, 'Basic', 'Free tier']
     ];
 
+    // [ID, DetailID, Lang, Desc, Remark]
 	let mockDetailLangs = [
         [1001, 101, 'ID', 'Aktifkan Notifikasi', ''],
         [1002, 102, 'ID', 'Mode Gelap', '']
@@ -55,6 +59,10 @@ export default function cFlag($scope, $q, $timeout) {
 	$scope.newDataFlagDetailLang = [];
 	$scope.tempData = [];
     
+    // Labels for Sliders
+    $scope.flagSliderLabelA = "Active";
+    $scope.flagSliderLabelB = "Active";
+
 	$scope.flagHeaderHeader = ["Multi Lang", "Flag", "Is User", "Count", "Lang", "Description"];
 	$scope.flagDetailHeader = ["Flag", "Sequence", "Description"];
 	$scope.flagDetailLangHeader = ["Language", "Description"];
@@ -179,14 +187,17 @@ export default function cFlag($scope, $q, $timeout) {
             switch (option) {
                 case "header":
                     $scope.filterMode = 'header';
+                    // [ID, Multi, Flag, IsUser, Count, Lang, Desc]
                     indexToKeep = [0, 1, 2, 3, 4, 5, 6]; 
                     break;
                 case "detail":
                     $scope.filterMode = 'detail';
+                    // [ID, Flag, Seq, Desc]
                     indexToKeep = [0, 2, 3, 4];
                     break;
 				case "detLang":
 					$scope.filterMode = 'detLang';
+                    // [ID, Lang, Desc]
 					indexToKeep = [0, 2, 3]; 
 					break;
                 default: return [];
@@ -230,6 +241,15 @@ export default function cFlag($scope, $q, $timeout) {
 		}
 	});
 
+    // Update Slider Labels dynamically
+    $scope.$watch('newDataFlagHeader[1]', function(newVal) {
+        $scope.flagSliderLabelA = (newVal === 1) ? "Active" : "Inactive";
+    });
+    $scope.$watch('newDataFlagDetail[2]', function(newVal) {
+        $scope.flagSliderLabelB = (newVal === 1) ? "Active" : "Inactive";
+    });
+
+    // Live Updates
     $scope.liveUpdateFlagMultiLang = async (row) => {
         const id = row[0];
         const index = mockHeaders.findIndex(r => r[0] === id);
@@ -265,15 +285,18 @@ export default function cFlag($scope, $q, $timeout) {
         const index = mockDetails.findIndex(r => r[0] === id);
         if(index !== -1) {
             mockDetails[index][2] = mockDetails[index][2] === 1 ? 0 : 1;
-            row[1] = mockDetails[index][2];
+            row[1] = mockDetails[index][2]; // row[1] is display index for flag
             $scope.toastOk("Detail Flag updated");
         }
     };
 
+    // Custom Confirmation Dialog
 	$scope.confirmAction = (message) => {
 		const deferred = $q.defer();
-		$scope.confirmModal = true;
-		$scope.confirmMessage = message;
+		$timeout(() => {
+            $scope.confirmModal = true;
+            $scope.confirmMessage = message;
+        });
 
 		$scope.onConfirm = () => {
 			$scope.confirmModal = false;
@@ -288,22 +311,44 @@ export default function cFlag($scope, $q, $timeout) {
 		return deferred.promise;
 	};
 
-    ///. Bulk delete
+    ///. Bulk delete with dynamic messages
 	$scope.deleteSelected = async function (table) {
-        if(!confirm("Delete selected items?")) return;
+        let message = "";
+        const count = $scope.checkedIds.length;
+        if (count === 0) return;
+
+        if (table === "header") {
+            message = count > 1 
+                ? "Are you sure you want to delete these flag headers?" 
+                : "Are you sure you want to delete this flag header?";
+        } else if (table === "detail") {
+            message = count > 1 
+                ? "Are you sure you want to delete these flag details?" 
+                : "Are you sure you want to delete this flag detail?";
+        } else if (table === "detLang") {
+            message = count > 1 
+                ? "Are you sure you want to delete these flag detail languages?" 
+                : "Are you sure you want to delete this flag detail language?";
+        }
+
+        const isConfirmed = await $scope.confirmAction(message);
+        if(!isConfirmed) return;
 
 		if (table === "header") {
 			await deleteMultipleFlagHeader($scope.checkedIds);
             await initApp();
+            $scope.toastOk(count > 1 ? "Headers deleted." : "Header deleted.");
 		} else if (table === "detail") {
 			await deleteMultipleFlagDetail($scope.checkedIds);
             const raw = await getFlagDetail($scope.currFlagHeaderId);
             $scope.flagDetailContent = filterData(raw, "detail");
+            $scope.toastOk(count > 1 ? "Details deleted." : "Detail deleted.");
             $scope.$apply();
 		} else if (table === "detLang") {
 			await deleteMultipleFlagDetailLang($scope.checkedIds);
             const raw = await getFlagDetailLang($scope.currFlagDetailId);
             $scope.flagDetailLangContent = filterData(raw, "detLang");
+            $scope.toastOk(count > 1 ? "Translations deleted." : "Translation deleted.");
             $scope.$apply();
 		}
 		$scope.clearSelection();
@@ -311,8 +356,10 @@ export default function cFlag($scope, $q, $timeout) {
 
 	//. PUBLIC/TEMPLATE FUNCTIONS
     ///. HEADER
-	$scope.btnAddNewFlagHeader = () => {
-        $scope.newDataFlagHeader = [0, 1, 0, 0, "EN", "", "{}", ""]; 
+	$scope.btnAddFlagHeader = () => {
+        // [ID, Multi, Flag, IsUser, Count, Lang, Desc, JSON, Remark]
+        // Init with 0 at index 0 for ID placeholder
+        $scope.newDataFlagHeader = [0, 0, 1, 0, 0, "EN", "", "{}", ""]; 
         $scope.showModalFormFlagHeader = true;
         $scope.formFlagHeaderTitle = "Add New Flag Header";
         $scope.btnFormFlagHeaderLabel = "Save";
@@ -322,7 +369,7 @@ export default function cFlag($scope, $q, $timeout) {
 	$scope.btnEditFlagHeader = (row) => {
         const id = row[0];
         const raw = mockHeaders.find(r => r[0] === id);
-        $scope.newDataFlagHeader = [...raw].slice(1);
+        $scope.newDataFlagHeader = [...raw]; // Keep ID for index consistency
         
         $scope.formFlagHeaderTitle = "Edit Flag Header";
         $scope.btnFormFlagHeaderLabel = "Update";
@@ -331,15 +378,15 @@ export default function cFlag($scope, $q, $timeout) {
     };
 
     $scope.submitFormFlagHeader = async () => {
+        // Indices: 6=Desc
         const formData = $scope.newDataFlagHeader;
-        
-        if (!formData[5]) { $scope.toastWarn("Description Required"); return; }
+        if (!formData[6]) { $scope.toastWarn("Description Required"); return; }
 
         if ($scope.tempData.length === 0) {
-            await addFlagHeader(formData); 
+            // Slice ID (index 0) for Add
+            await addFlagHeader(formData.slice(1)); 
         } else {
-            const id = $scope.tempData[0];
-            await updateFlagHeader([id, ...formData]);
+            await updateFlagHeader(formData);
         }
 
         $scope.showModalFormFlagHeader = false;
@@ -362,15 +409,18 @@ export default function cFlag($scope, $q, $timeout) {
     };
     
     $scope.deleteFlagHeader = async (id) => {
-        if (!confirm("Delete this header?")) return;
-        await deleteFlagHeader(id);
-        await initApp();
-        $scope.toastOk("Deleted.");
+        const isConfirmed = await $scope.confirmAction("Delete this header?");
+        if (isConfirmed) {
+            await deleteFlagHeader(id);
+            await initApp();
+            $scope.toastOk("Deleted.");
+        }
     };
 
 	///. DETAIL
 	$scope.btnAddNewFlagDetail = () => {
-        $scope.newDataFlagDetail = [$scope.currFlagHeaderId, 1, 0, "", ""];
+        // [ID, HeaderID, Flag, Seq, Desc, Remark]
+        $scope.newDataFlagDetail = [0, $scope.currFlagHeaderId, 1, 0, "", ""];
         $scope.formFlagDetailTitle = "Add New Detail";
         $scope.btnFormFlagDetailLabel = "Add";
         $scope.tempData = [];
@@ -380,7 +430,7 @@ export default function cFlag($scope, $q, $timeout) {
     $scope.btnEditFlagDetail = (row) => {
         const id = row[0];
         const raw = mockDetails.find(r => r[0] === id);
-        $scope.newDataFlagDetail = [...raw].slice(1);
+        $scope.newDataFlagDetail = [...raw]; 
         
         $scope.formFlagDetailTitle = "Edit Detail";
         $scope.btnFormFlagDetailLabel = "Update";
@@ -389,13 +439,13 @@ export default function cFlag($scope, $q, $timeout) {
     };
 
     $scope.submitFormFlagDetail = async () => {
-        if (!$scope.newDataFlagDetail[3]) { $scope.toastWarn("Description is required!"); return; }
+        // Indices: [4]=Desc
+        if (!$scope.newDataFlagDetail[4]) { $scope.toastWarn("Description is required!"); return; }
 
         if ($scope.tempData.length === 0) {
-            await addFlagDetail($scope.newDataFlagDetail); 
+            await addFlagDetail($scope.newDataFlagDetail.slice(1)); 
         } else {
-            const id = $scope.tempData[0];
-            await updateFlagDetail([id, ...$scope.newDataFlagDetail]);
+            await updateFlagDetail($scope.newDataFlagDetail);
         }
 
         $scope.showModalFormFlagDetail = false;
@@ -406,12 +456,14 @@ export default function cFlag($scope, $q, $timeout) {
     };
 
     $scope.deleteFlagDetail = async (id) => {
-        if (!confirm("Delete this detail?")) return;
-        await deleteSingleFlagDetail(id);
-        const raw = await getFlagDetail($scope.currFlagHeaderId);
-        $scope.flagDetailContent = filterData(raw, "detail");
-        $scope.toastOk("Deleted.");
-        $scope.$apply();
+        const isConfirmed = await $scope.confirmAction("Delete this detail?");
+        if (isConfirmed) {
+            await deleteSingleFlagDetail(id);
+            const raw = await getFlagDetail($scope.currFlagHeaderId);
+            $scope.flagDetailContent = filterData(raw, "detail");
+            $scope.toastOk("Deleted.");
+            $scope.$apply();
+        }
     };
 
     ///. DETAIL LANG
@@ -430,7 +482,8 @@ export default function cFlag($scope, $q, $timeout) {
     };
 
     $scope.btnAddNewFlagDetailLang = () => {
-        $scope.newDataFlagDetailLang = [$scope.currFlagDetailId, "EN", "", ""];
+        // [ID, DetailID, Lang, Desc, Remark]
+        $scope.newDataFlagDetailLang = [0, $scope.currFlagDetailId, "EN", "", ""];
         $scope.formFlagDetailLangTitle = "Add Translation";
         $scope.btnFormFlagDetailLangLabel = "Add";
         $scope.tempData = [];
@@ -440,7 +493,7 @@ export default function cFlag($scope, $q, $timeout) {
     $scope.btnEditFlagDetailLang = (row) => {
         const id = row[0];
         const raw = mockDetailLangs.find(r => r[0] === id);
-        $scope.newDataFlagDetailLang = [...raw].slice(1);
+        $scope.newDataFlagDetailLang = [...raw];
         
         $scope.formFlagDetailLangTitle = "Edit Translation";
         $scope.btnFormFlagDetailLangLabel = "Update";
@@ -449,13 +502,13 @@ export default function cFlag($scope, $q, $timeout) {
     };
 
     $scope.submitFormFlagDetailLang = async () => {
-        if (!$scope.newDataFlagDetailLang[2]) { $scope.toastWarn("Description is required!"); return; }
+        // Indices: [3]=Desc
+        if (!$scope.newDataFlagDetailLang[3]) { $scope.toastWarn("Description is required!"); return; }
 
         if ($scope.tempData.length === 0) {
-            await addFlagDetailLang($scope.newDataFlagDetailLang);
+            await addFlagDetailLang($scope.newDataFlagDetailLang.slice(1));
         } else {
-            const id = $scope.tempData[0];
-            await updateFlagDetailLang([id, ...$scope.newDataFlagDetailLang]);
+            await updateFlagDetailLang($scope.newDataFlagDetailLang);
         }
 
         $scope.showModalFormFlagDetailLang = false;
@@ -466,14 +519,17 @@ export default function cFlag($scope, $q, $timeout) {
     };
 
     $scope.deleteFlagDetailLang = async (id) => {
-        if (!confirm("Delete this translation?")) return;
-        await deleteSingleFlagDetailLang(id);
-        const raw = await getFlagDetailLang($scope.currFlagDetailId);
-        $scope.flagDetailLangContent = filterData(raw, "detLang");
-        $scope.toastOk("Deleted.");
-        $scope.$apply();
+        const isConfirmed = await $scope.confirmAction("Delete this translation?");
+        if (isConfirmed) {
+            await deleteSingleFlagDetailLang(id);
+            const raw = await getFlagDetailLang($scope.currFlagDetailId);
+            $scope.flagDetailLangContent = filterData(raw, "detLang");
+            $scope.toastOk("Deleted.");
+            $scope.$apply();
+        }
     };
 
+    // Navigation
     $scope.gotoPreviousPage = async () => {
         $scope.clearSelection();
         if ($scope.showTableFlagDetailLang) {
@@ -492,6 +548,7 @@ export default function cFlag($scope, $q, $timeout) {
         $scope.$apply();
     };
 
+    // Checkbox & Sort
     $scope.clearSelection = function () {
         $scope.checkedIds = [];
         $scope.selectAll = false;
