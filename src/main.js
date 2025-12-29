@@ -5,23 +5,23 @@ import { appConfig } from "./config";
 
 const app = angular.module("konsolku", [uiRouter]);
 
-app.factory("G", () => ({ a: (k) => null }));
-app.factory("A", () => ({ g: async () => ({ data: { _: 0, $: [] } }), p: async () => ({ data: { _: 0, $: [] } }) }));
-app.factory("Crypto", () => ({ encData: (d) => d, decData: (d) => d }));
+app.factory("G", [() => ({ a: (k) => null })]);
+app.factory("A", [() => ({ g: async () => ({ data: { _: 0, $: [] } }), p: async () => ({ data: { _: 0, $: [] } }) })]);
+app.factory("Crypto", [() => ({ encData: (d) => d, decData: (d) => d })]);
 
-app.config(function ($stateProvider, $urlRouterProvider) {
+app.config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
     function getAllRoutes(items) {
         let routes = [];
         items.forEach((item) => {
-        if (item.state === "login") {
-            routes.push(item);
-        }
+            if (item.state === "login") {
+                routes.push(item);
+            }
 
-        if (item.children) {
-            routes = routes.concat(getAllRoutes(item.children));
-        } else {
-            if (item.state !== "login") routes.push(item);
-        }
+            if (item.children) {
+                routes = routes.concat(getAllRoutes(item.children));
+            } else {
+                if (item.state !== "login") routes.push(item);
+            }
         });
         return routes;
     }
@@ -42,15 +42,15 @@ app.config(function ($stateProvider, $urlRouterProvider) {
     const defaultRouteHandler = function ($injector) {
         const $state = $injector.get("$state");
         if (localStorage.getItem("token")) {
-        return "/home";
+            return "/home";
         } else {
-        return "/login";
+            return "/login";
         }
     };
     defaultRouteHandler.$inject = ['$injector'];
 
     $urlRouterProvider.otherwise(defaultRouteHandler);
-});
+}]);
 
 app.controller("mainController", ['$scope', '$transitions', '$state', function ($scope, $transitions, $state) {
     $scope.menuItems = appConfig.filter((item) => item.state !== "login");
@@ -60,11 +60,12 @@ app.controller("mainController", ['$scope', '$transitions', '$state', function (
 
     if (userTheme === "dark" || (!userTheme && systemTheme)) {
         $scope.isDarkMode = true;
-    document.documentElement.classList.add("dark");
+        document.documentElement.classList.add("dark");
     } else {
         $scope.isDarkMode = false;
         document.documentElement.classList.remove("dark");
     }
+    
     $scope.toggleTheme = function () {
         $scope.isDarkMode = !$scope.isDarkMode;
         
@@ -87,11 +88,11 @@ app.controller("mainController", ['$scope', '$transitions', '$state', function (
         toState.name === "login";
 
         if (!$scope.isLoginPage && !localStorage.getItem("token")) {
-        $state.go("login");
+            $state.go("login");
         }
 
         if ($scope.isLoginPage && localStorage.getItem("token")) {
-        $state.go("home");
+            $state.go("home");
         }
     });
 
