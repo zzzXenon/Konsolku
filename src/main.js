@@ -52,7 +52,7 @@ app.config(function ($stateProvider, $urlRouterProvider) {
     $urlRouterProvider.otherwise(defaultRouteHandler);
 });
 
-app.controller("mainController", function ($scope, $transitions, $state) {
+app.controller("mainController", ['$scope', '$transitions', '$state', function ($scope, $transitions, $state) {
     $scope.menuItems = appConfig.filter((item) => item.state !== "login");
 
     const userTheme = localStorage.getItem("theme");
@@ -104,4 +104,4 @@ app.controller("mainController", function ($scope, $transitions, $state) {
     $scope.toggleItem = function (item) {
         if (item.children) item.isOpen = !item.isOpen;
     };
-});
+}]);
